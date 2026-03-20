@@ -1,0 +1,34 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Hero from '../components/Hero.astro';
+import LivestreamSection from '../components/LivestreamSection.astro';
+import MakerAppsSection from '../components/MakerAppsSection.astro';
+import GetInvolvedSection from '../components/GetInvolvedSection.astro';
+import CommunityResourcesSection from '../components/CommunityResourcesSection.astro';
+import CTASection from '../components/CTASection.astro';
+import Footer from '../components/Footer.astro';
+import { getMakerApps, getInvolvedCards, getCommunityResources } from '../lib/notion';
+
+// Cache responses for 60 seconds on Vercel's edge; stale content served for
+// up to 5 minutes while revalidation happens in the background.
+Astro.response.headers.set('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+
+// Fetch all Notion data in parallel
+const [makerApps, involvedCards, communityResources] = await Promise.all([
+  getMakerApps(),
+  getInvolvedCards(),
+  getCommunityResources(),
+]);
+---
+
+<Layout>
+  <Navbar />
+  <Hero />
+  <LivestreamSection />
+  <MakerAppsSection apps={makerApps} />
+  <GetInvolvedSection cards={involvedCards} />
+  <CommunityResourcesSection resources={communityResources} />
+  <CTASection />
+  <Footer />
+</Layout>

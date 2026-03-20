@@ -1,0 +1,75 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'MakerDeck: The 24/7 Global Maker Community',
+  description = 'Join the MakerDeck global maker community! Featuring a 24/7 live stream and monthly meetups.',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CSS via CDN -->
+    <script is:inline src="https://cdn.tailwindcss.com"></script>
+    <script is:inline>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['Inter', 'sans-serif'] }
+          }
+        }
+      }
+    </script>
+
+    <!-- FontAwesome 6.6.0 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="MakerDeck — Build, Create, and Learn Together" />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://makerdeck.net/" />
+    <meta property="og:image" content="https://makerdeck.net/img/hero.jpg" />
+    <meta property="og:image:width" content="1920" />
+    <meta property="og:image:height" content="480" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MakerDeck — 24/7 Global Maker Community" />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content="https://makerdeck.net/img/hero.jpg" />
+    <meta name="twitter:site" content="@makerdeck" />
+
+    <!-- Icons -->
+    <link rel="icon" href="/img/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" href="/img/favicon-32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="/img/favicon-192.png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/img/apple-touch-icon.png" />
+
+    <!-- Google Analytics -->
+    <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-7EB1MK9Y3E"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('js', new Date());
+      gtag('config', 'G-7EB1MK9Y3E');
+    </script>
+  </head>
+  <body class="font-sans bg-[#0d1117] text-[#e6edf3]">
+    <slot />
+  </body>
+</html>

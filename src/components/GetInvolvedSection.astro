@@ -1,0 +1,78 @@
+---
+import type { InvolvedCard } from '../lib/notion';
+import { getTheme } from '../lib/colors';
+
+interface Props {
+  cards: InvolvedCard[];
+}
+
+const { cards } = Astro.props;
+---
+
+<section id="get-involved" class="container mx-auto py-16 px-6 border-t border-gray-800">
+  <div class="text-center mb-16">
+    <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-6">Get Involved</h2>
+    <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+      Connect, participate, and stay in the loop with the global maker community.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+    {cards.map((card) => {
+      const theme = getTheme(card.colorTheme);
+      return (
+        <div
+          class={`bg-[#161b22] rounded-xl p-8 border border-white/5 ${theme.border} hover:bg-[#1c2128] transition duration-300 group flex flex-col relative overflow-hidden`}
+        >
+          {card.badge && (
+            <div class="absolute top-0 right-0 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+              {card.badge}
+            </div>
+          )}
+
+          <div class="flex items-center gap-4 mb-4">
+            <div class={`h-12 w-12 rounded-lg ${theme.iconBg} flex items-center justify-center group-hover:scale-110 transition`}>
+              <i class={`${card.icon} text-2xl ${theme.iconText}`}></i>
+            </div>
+            <h3 class="text-xl font-bold text-white">{card.name}</h3>
+          </div>
+
+          <p class="text-gray-400 mb-6 flex-grow">{card.description}</p>
+
+          <a
+            href={card.url}
+            target={card.url.startsWith('http') ? '_blank' : undefined}
+            rel={card.url.startsWith('http') ? 'noopener noreferrer' : undefined}
+            class={`${theme.ctaText} ${theme.ctaHover} font-semibold inline-flex items-center mt-auto`}
+          >
+            {card.linkText} <i class="fa-solid fa-arrow-right ml-2 text-sm"></i>
+          </a>
+        </div>
+      );
+    })}
+
+    <!-- "Connect" card — hardcoded because it's a social grid, not a single link -->
+    <div class="bg-[#161b22] rounded-xl p-8 border border-white/5 hover:border-blue-500/50 hover:bg-[#1c2128] transition duration-300 group flex flex-col">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="h-12 w-12 rounded-lg bg-blue-500/20 flex items-center justify-center group-hover:scale-110 transition">
+          <i class="fa-solid fa-share-nodes text-2xl text-blue-400"></i>
+        </div>
+        <h3 class="text-xl font-bold text-white">Connect</h3>
+      </div>
+
+      <div class="grid grid-cols-5 gap-4 mt-2 mb-2">
+        <a href="https://discord.gg/makerdeck-226044842126344194" target="_blank" class="text-gray-400 hover:text-indigo-400 transition flex justify-center" title="Discord"><i class="fa-brands fa-discord text-2xl"></i></a>
+        <a href="https://twitch.tv/MakerDeck" target="_blank" class="text-gray-400 hover:text-[#9146FF] transition flex justify-center" title="Twitch"><i class="fab fa-twitch text-2xl"></i></a>
+        <a href="https://x.com/makerdeck" target="_blank" class="text-gray-400 hover:text-white transition flex justify-center" title="X (Twitter)"><i class="fab fa-x-twitter text-2xl"></i></a>
+        <a href="https://youtube.com/@MakerDeck" target="_blank" class="text-gray-400 hover:text-[#FF0000] transition flex justify-center" title="YouTube"><i class="fab fa-youtube text-2xl"></i></a>
+        <a href="https://www.facebook.com/groups/makerdeck" target="_blank" class="text-gray-400 hover:text-[#1877F2] transition flex justify-center" title="Facebook Group"><i class="fab fa-facebook text-2xl"></i></a>
+        <a href="https://mastodon.social/@makerdeck" target="_blank" class="text-gray-400 hover:text-[#6364FF] transition flex justify-center" title="Mastodon"><i class="fa-brands fa-mastodon text-2xl"></i></a>
+        <a href="https://bsky.app/profile/makerdeck.net" target="_blank" class="text-gray-400 hover:text-[#0285FF] transition flex justify-center" title="Bluesky"><i class="fa-brands fa-bluesky text-2xl"></i></a>
+        <a href="https://www.threads.net/@makerdeck" target="_blank" class="text-gray-400 hover:text-white transition flex justify-center" title="Threads"><i class="fa-solid fa-at text-2xl"></i></a>
+        <a href="https://tiktok.com/@makerdecklive" target="_blank" class="text-gray-400 hover:text-[#ff0050] transition flex justify-center" title="TikTok"><i class="fa-brands fa-tiktok text-2xl"></i></a>
+        <a href="https://www.instagram.com/makerdeck/" target="_blank" class="text-gray-400 hover:text-[#E4405F] transition flex justify-center" title="Instagram"><i class="fab fa-instagram text-2xl"></i></a>
+      </div>
+      <p class="text-sm text-center text-gray-500 mt-2">Follow us everywhere!</p>
+    </div>
+  </div>
+</section>

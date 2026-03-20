@@ -1,0 +1,17 @@
+# build output
+dist/
+.output/
+
+# dependencies
+node_modules/
+
+# environment variables
+.env
+.env.local
+
+# Vercel
+.vercel/
+
+# macOS
+.DS_Store
+.env

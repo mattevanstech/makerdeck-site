@@ -1,0 +1,16 @@
+{
+  "name": "makerdeck-site",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/vercel": "^7.8.0",
+    "@notionhq/client": "^2.2.15",
+    "astro": "^4.16.0"
+  }
+}

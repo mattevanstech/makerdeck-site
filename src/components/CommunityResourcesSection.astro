@@ -1,0 +1,56 @@
+---
+import type { CommunityResource } from '../lib/notion';
+import { getTheme } from '../lib/colors';
+
+interface Props {
+  resources: CommunityResource[];
+}
+
+const { resources } = Astro.props;
+---
+
+<section id="community-resources" class="py-16 border-t border-gray-800">
+  <div class="container mx-auto px-6">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-6">Community Resources</h2>
+      <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+        Tools and platforms built by and for the maker community.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+      {resources.map((resource) => {
+        const theme = getTheme(resource.colorTheme);
+        return (
+          <a
+            href={resource.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class={`app-card bg-[#161b22] rounded-xl p-8 border border-white/5 ${theme.border} hover:bg-[#1c2128] transition duration-300 group flex flex-col no-underline`}
+          >
+            <div class="flex items-center gap-4 mb-4">
+              <div class={`h-12 w-12 rounded-lg ${theme.iconBg} flex items-center justify-center group-hover:scale-110 transition`}>
+                <i class={`${resource.icon} text-2xl ${theme.iconText}`}></i>
+              </div>
+              <h3 class="text-xl font-bold text-white">{resource.name}</h3>
+            </div>
+            <p class="text-gray-400 mb-6 flex-grow">{resource.description}</p>
+            <span class={`${theme.ctaText} ${theme.ctaHover} font-semibold inline-flex items-center mt-auto`}>
+              Visit Site <i class="fa-solid fa-arrow-right ml-2 text-sm"></i>
+            </span>
+          </a>
+        );
+      })}
+    </div>
+  </div>
+</section>
+
+<style>
+  .app-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+  }
+  .app-card:hover {
+    transform: translateY(-4px);
+  }
+</style>
