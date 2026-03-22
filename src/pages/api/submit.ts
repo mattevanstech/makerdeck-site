@@ -20,9 +20,9 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // Validate file size (10MB max)
-    if (photo.size > 10 * 1024 * 1024) {
-      return new Response(JSON.stringify({ error: 'Photo must be under 10MB' }), {
+    // Validate file size (4MB max — Vercel serverless limit is 4.5MB)
+    if (photo.size > 4 * 1024 * 1024) {
+      return new Response(JSON.stringify({ error: 'Photo must be under 4MB' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });

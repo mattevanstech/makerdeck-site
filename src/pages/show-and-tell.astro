@@ -129,7 +129,7 @@ function formatDate(iso: string): string {
             <div id="drop-zone-text">
               <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-600 mb-3 block"></i>
               <p class="text-gray-400 font-medium">Drop your photo here or <span class="text-purple-400">browse</span></p>
-              <p class="text-gray-600 text-sm mt-1">JPG, PNG, WEBP — max 10MB</p>
+              <p class="text-gray-600 text-sm mt-1">JPG, PNG, WEBP — auto-compressed on upload</p>
             </div>
             <input type="file" id="photo-input" name="photo" accept="image/*" class="hidden" required />
           </div>
@@ -242,17 +242,55 @@ function formatDate(iso: string): string {
     if (file) showPreview(file);
   });
 
-  function showPreview(file: File) {
+  // ── Image compression ────────────────────────────────────────────────────────
+  // Resizes to max 2000px and re-encodes as JPEG before upload so photos stay
+  // well under Vercel's 4.5 MB serverless body limit.
+  function compressImage(file: File): Promise<File> {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const MAX = 2000;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width > height) {
+            height = Math.round(height * MAX / width);
+            width  = MAX;
+          } else {
+            width  = Math.round(width * MAX / height);
+            height = MAX;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width  = width;
+        canvas.height = height;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+        URL.revokeObjectURL(url);
+        canvas.toBlob((blob) => {
+          const compressed = new File(
+            [blob!],
+            file.name.replace(/\.[^.]+$/, '.jpg'),
+            { type: 'image/jpeg', lastModified: Date.now() }
+          );
+          resolve(compressed);
+        }, 'image/jpeg', 0.85);
+      };
+      img.src = url;
+    });
+  }
+
+  async function showPreview(file: File) {
+    const compressed = await compressImage(file);
     const reader = new FileReader();
     reader.onload = (e) => {
       preview.src = e.target?.result as string;
       preview.classList.remove('hidden');
       dropText.classList.add('hidden');
     };
-    reader.readAsDataURL(file);
-    // Sync to hidden input
+    reader.readAsDataURL(compressed);
+    // Sync compressed file to the input so the form submits it
     const dt = new DataTransfer();
-    dt.items.add(file);
+    dt.items.add(compressed);
     fileInput.files = dt.files;
   }
 
