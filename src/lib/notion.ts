@@ -107,3 +107,34 @@ export async function getCommunityResources(): Promise<CommunityResource[]> {
     order:       getNumber(page, 'Order'),
   }));
 }
+
+// ── Show & Tell ───────────────────────────────────────────────────────────────
+
+export interface ShowAndTellSubmission {
+  id: string;
+  name: string;
+  description: string;
+  photoUrl: string;
+  modelSource: string;
+  submitter: string;
+  source: string;
+  submitted: string;
+}
+
+export async function getShowAndTellSubmissions(): Promise<ShowAndTellSubmission[]> {
+  const response = await notion.databases.query({
+    database_id: import.meta.env.NOTION_SHOW_AND_TELL_DB_ID,
+    filter: { property: 'Approved', checkbox: { equals: true } },
+    sorts: [{ timestamp: 'created_time', direction: 'descending' }],
+  });
+  return (response.results as PageObjectResponse[]).map((page) => ({
+    id:          page.id,
+    name:        getText(page, 'Name'),
+    description: getText(page, 'Description'),
+    photoUrl:    getText(page, 'Photo URL'),
+    modelSource: getText(page, 'Model Source'),
+    submitter:   getText(page, 'Submitter'),
+    source:      getText(page, 'Source'),
+    submitted:   (page.properties['Submitted'] as any)?.created_time ?? '',
+  }));
+}
