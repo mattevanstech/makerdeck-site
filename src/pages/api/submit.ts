@@ -1,6 +1,98 @@
 import type { APIRoute } from 'astro';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { Client } from '@notionhq/client';
+
+// ── AWS SigV4 helpers — no external packages, uses Web Crypto API ─────────────
+
+async function sha256(data: string | Uint8Array): Promise<ArrayBuffer> {
+  const input = typeof data === 'string' ? new TextEncoder().encode(data) : data;
+  return crypto.subtle.digest('SHA-256', input);
+}
+
+async function hmacSha256(key: BufferSource, message: string): Promise<ArrayBuffer> {
+  const k = await crypto.subtle.importKey(
+    'raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+  );
+  return crypto.subtle.sign('HMAC', k, new TextEncoder().encode(message));
+}
+
+function toHex(buf: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function uploadToR2(
+  accountId: string,
+  accessKeyId: string,
+  secretAccessKey: string,
+  bucket: string,
+  key: string,
+  body: Uint8Array,
+  contentType: string,
+): Promise<void> {
+  const region  = 'auto';
+  const service = 's3';
+  const host    = `${accountId}.r2.cloudflarestorage.com`;
+  const url     = `https://${host}/${bucket}/${key}`;
+
+  const now      = new Date();
+  const ymd      = now.toISOString().slice(0, 10).replace(/-/g, '');           // 20240101
+  const datetime = ymd + 'T' + now.toISOString().slice(11, 19).replace(/:/g, '') + 'Z'; // 20240101T120000Z
+
+  const payloadHash = toHex(await sha256(body));
+
+  const canonicalHeaders =
+    `content-type:${contentType}\n` +
+    `host:${host}\n` +
+    `x-amz-content-sha256:${payloadHash}\n` +
+    `x-amz-date:${datetime}\n`;
+  const signedHeaders = 'content-type;host;x-amz-content-sha256;x-amz-date';
+
+  const canonicalRequest = [
+    'PUT',
+    `/${bucket}/${key}`,
+    '',   // no query string
+    canonicalHeaders,
+    signedHeaders,
+    payloadHash,
+  ].join('\n');
+
+  const credentialScope = `${ymd}/${region}/${service}/aws4_request`;
+  const stringToSign = [
+    'AWS4-HMAC-SHA256',
+    datetime,
+    credentialScope,
+    toHex(await sha256(canonicalRequest)),
+  ].join('\n');
+
+  // Derive signing key
+  let signingKey: BufferSource = new TextEncoder().encode(`AWS4${secretAccessKey}`);
+  signingKey = await hmacSha256(signingKey, ymd);
+  signingKey = await hmacSha256(signingKey, region);
+  signingKey = await hmacSha256(signingKey, service);
+  signingKey = await hmacSha256(signingKey, 'aws4_request');
+
+  const signature    = toHex(await hmacSha256(signingKey, stringToSign));
+  const authorization =
+    `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, ` +
+    `SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Authorization':        authorization,
+      'Content-Type':         contentType,
+      'x-amz-content-sha256': payloadHash,
+      'x-amz-date':           datetime,
+    },
+    body,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`R2 upload failed ${res.status}: ${text}`);
+  }
+}
+
+// ── API Route ─────────────────────────────────────────────────────────────────
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -20,7 +112,7 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // Validate file size (4MB max — Vercel serverless limit is 4.5MB)
+    // Validate file size (4MB max — Vercel serverless body limit is 4.5MB)
     if (photo.size > 4 * 1024 * 1024) {
       return new Response(JSON.stringify({ error: 'Photo must be under 4MB' }), {
         status: 400,
@@ -29,27 +121,21 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // ── Upload to Cloudflare R2 ─────────────────────────────────────────────
-    const r2 = new S3Client({
-      region: 'auto',
-      endpoint: `https://${import.meta.env.CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-      credentials: {
-        accessKeyId:     import.meta.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
-        secretAccessKey: import.meta.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
-      },
-    });
+    const ext  = photo.name.split('.').pop()?.toLowerCase() ?? 'jpg';
+    const key  = `show-and-tell/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+    const body = new Uint8Array(await photo.arrayBuffer());
 
-    const ext      = photo.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const fileName = `show-and-tell/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
-    const buffer   = Buffer.from(await photo.arrayBuffer());
+    await uploadToR2(
+      import.meta.env.CLOUDFLARE_R2_ACCOUNT_ID,
+      import.meta.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
+      import.meta.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
+      import.meta.env.CLOUDFLARE_R2_BUCKET_NAME,
+      key,
+      body,
+      photo.type || 'image/jpeg',
+    );
 
-    await r2.send(new PutObjectCommand({
-      Bucket:      import.meta.env.CLOUDFLARE_R2_BUCKET_NAME,
-      Key:         fileName,
-      Body:        buffer,
-      ContentType: photo.type,
-    }));
-
-    const photoUrl = `${import.meta.env.CLOUDFLARE_R2_PUBLIC_URL}/${fileName}`;
+    const photoUrl = `${import.meta.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`;
 
     // ── Create Notion draft ─────────────────────────────────────────────────
     const notion = new Client({ auth: import.meta.env.NOTION_API_KEY });
@@ -57,13 +143,13 @@ export const POST: APIRoute = async ({ request }) => {
     await notion.pages.create({
       parent: { database_id: import.meta.env.NOTION_SHOW_AND_TELL_DB_ID },
       properties: {
-        'Name':        { title:     [{ text: { content: name } }] },
-        'Description': { rich_text: [{ text: { content: description } }] },
-        'Photo URL':   { url: photoUrl },
-        'Model Source':{ url: modelSource || null },
-        'Submitter':   { rich_text: [{ text: { content: submitter } }] },
-        'Source':      { select: { name: 'Web Form' } },
-        'Approved':    { checkbox: false },
+        'Name':         { title:     [{ text: { content: name } }] },
+        'Description':  { rich_text: [{ text: { content: description } }] },
+        'Photo URL':    { url: photoUrl },
+        'Model Source': { url: modelSource || null },
+        'Submitter':    { rich_text: [{ text: { content: submitter } }] },
+        'Source':       { select: { name: 'Web Form' } },
+        'Approved':     { checkbox: false },
       },
     });
 
