@@ -309,8 +309,32 @@ function formatDate(iso: string): string {
     errorBox.classList.add('hidden');
 
     try {
-      const formData = new FormData(form);
-      const res = await fetch('/api/submit', { method: 'POST', body: formData });
+      const file = fileInput.files?.[0];
+      if (!file) throw new Error('No photo selected');
+
+      // Encode compressed photo as base64 so we can send JSON instead of
+      // FormData — Vercel blocks cross-site multipart/form-data POSTs.
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name:        (document.getElementById('name')        as HTMLInputElement).value.trim(),
+          description: (document.getElementById('description') as HTMLTextAreaElement).value.trim(),
+          modelSource: (document.getElementById('modelSource') as HTMLInputElement).value.trim(),
+          submitter:   (document.getElementById('submitter')   as HTMLInputElement).value.trim(),
+          fileName:    file.name,
+          fileType:    file.type || 'image/jpeg',
+          fileData:    base64,
+        }),
+      });
+
       if (!res.ok) throw new Error('Failed');
       success.classList.remove('hidden');
       form.reset();

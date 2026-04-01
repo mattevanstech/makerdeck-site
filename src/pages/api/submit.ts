@@ -96,24 +96,26 @@ async function uploadToR2(
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const formData = await request.formData();
-
-    const name        = (formData.get('name') as string)?.trim();
-    const description = (formData.get('description') as string)?.trim() ?? '';
-    const modelSource = (formData.get('modelSource') as string)?.trim() ?? '';
-    const submitter   = (formData.get('submitter') as string)?.trim();
-    const photo       = formData.get('photo') as File | null;
+    // Accept JSON (not multipart/form-data) so Vercel's CSRF guard doesn't block it
+    const { name, description, modelSource, submitter, fileName, fileType, fileData } =
+      await request.json() as {
+        name: string; description: string; modelSource: string; submitter: string;
+        fileName: string; fileType: string; fileData: string;
+      };
 
     // Validate required fields
-    if (!name || !submitter || !photo || photo.size === 0) {
+    if (!name?.trim() || !submitter?.trim() || !fileData) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    // Validate file size (4MB max — Vercel serverless body limit is 4.5MB)
-    if (photo.size > 4 * 1024 * 1024) {
+    // Decode base64 photo
+    const body = Uint8Array.from(atob(fileData), c => c.charCodeAt(0));
+
+    // Validate file size (4MB max after base64 decode)
+    if (body.length > 4 * 1024 * 1024) {
       return new Response(JSON.stringify({ error: 'Photo must be under 4MB' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
@@ -121,9 +123,8 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // ── Upload to Cloudflare R2 ─────────────────────────────────────────────
-    const ext  = photo.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const key  = `show-and-tell/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
-    const body = new Uint8Array(await photo.arrayBuffer());
+    const ext = (fileName ?? 'photo').split('.').pop()?.toLowerCase() ?? 'jpg';
+    const key = `show-and-tell/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
 
     await uploadToR2(
       import.meta.env.CLOUDFLARE_R2_ACCOUNT_ID,
@@ -132,7 +133,7 @@ export const POST: APIRoute = async ({ request }) => {
       import.meta.env.CLOUDFLARE_R2_BUCKET_NAME,
       key,
       body,
-      photo.type || 'image/jpeg',
+      fileType || 'image/jpeg',
     );
 
     const photoUrl = `${import.meta.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`;
