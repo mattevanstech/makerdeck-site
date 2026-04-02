@@ -16,23 +16,92 @@
       <span class="text-xl font-bold text-white tracking-tight hidden sm:block">MakerDeck</span>
     </a>
 
-    <!-- Desktop: nav links + socials + CTA -->
+    <!-- Desktop nav -->
     <div class="hidden lg:flex items-center gap-6">
-      <a href="/show-and-tell" class="text-gray-300 hover:text-white text-sm font-semibold transition flex items-center gap-1.5">
-        <i class="fa-solid fa-camera text-purple-400"></i> Show & Tell
-      </a>
-      <div class="flex items-center gap-3 border-r border-gray-700 pr-6 mr-2 text-gray-400">
-        <a href="https://discord.gg/makerdeck-226044842126344194" target="_blank" class="nav-icon hover:text-indigo-400 transition" title="Discord"><i class="fa-brands fa-discord text-lg"></i></a>
-        <a href="https://twitch.tv/makerdeck" target="_blank" class="nav-icon hover:text-[#9146FF] transition" title="Twitch"><i class="fab fa-twitch text-lg"></i></a>
-        <a href="https://x.com/makerdeck" target="_blank" class="nav-icon hover:text-white transition" title="X / Twitter"><i class="fab fa-x-twitter text-lg"></i></a>
-        <a href="https://youtube.com/@MakerDeck" target="_blank" class="nav-icon hover:text-[#FF0000] transition" title="YouTube"><i class="fab fa-youtube text-lg"></i></a>
-        <a href="https://www.facebook.com/groups/makerdeck" target="_blank" class="nav-icon hover:text-[#1877F2] transition" title="Facebook Group"><i class="fab fa-facebook text-lg"></i></a>
-        <a href="https://mastodon.social/@makerdeck" target="_blank" class="nav-icon hover:text-[#6364FF] transition" title="Mastodon"><i class="fa-brands fa-mastodon text-lg"></i></a>
-        <a href="https://bsky.app/profile/makerdeck.net" target="_blank" class="nav-icon hover:text-[#0285FF] transition" title="Bluesky"><i class="fa-brands fa-bluesky text-lg"></i></a>
-        <a href="https://www.threads.net/@makerdeck" target="_blank" class="nav-icon hover:text-white transition" title="Threads"><i class="fa-solid fa-at text-lg"></i></a>
-        <a href="https://tiktok.com/@makerdecklive" target="_blank" class="nav-icon hover:text-[#ff0050] transition" title="TikTok"><i class="fa-brands fa-tiktok text-lg"></i></a>
-        <a href="https://www.instagram.com/makerdeck/" target="_blank" class="nav-icon hover:text-[#E4405F] transition" title="Instagram"><i class="fab fa-instagram text-lg"></i></a>
-        <a href="https://makerdeck.substack.com/" target="_blank" class="nav-icon hover:text-[#FF6719] transition" title="Substack"><i class="fa-solid fa-bookmark text-lg"></i></a>
+
+      <!-- Home dropdown -->
+      <div class="dropdown-parent relative">
+        <button class="dropdown-trigger flex items-center gap-1 text-gray-300 hover:text-white text-sm font-semibold transition">
+          <i class="fa-solid fa-house text-purple-400 text-xs"></i>
+          Home
+          <i class="fa-solid fa-chevron-down text-[10px] text-gray-500 mt-px transition-transform duration-200"></i>
+        </button>
+        <div class="dropdown-menu hidden absolute top-full left-0 mt-2 w-52 bg-gray-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden">
+          <a href="/" class="dropdown-item flex items-center gap-2.5 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition">
+            <i class="fa-solid fa-grid-2 text-purple-400 w-4 text-center"></i> Overview
+          </a>
+          <div class="border-t border-gray-800 mx-3"></div>
+          <a href="/#maker-apps" class="dropdown-item flex items-center gap-2.5 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition">
+            <i class="fa-solid fa-wrench text-blue-400 w-4 text-center"></i> Free Maker Apps
+          </a>
+          <a href="/#get-involved" class="dropdown-item flex items-center gap-2.5 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition">
+            <i class="fa-solid fa-handshake text-green-400 w-4 text-center"></i> Get Involved
+          </a>
+          <a href="/#community-resources" class="dropdown-item flex items-center gap-2.5 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition">
+            <i class="fa-solid fa-book-open text-orange-400 w-4 text-center"></i> Community Resources
+          </a>
+        </div>
+      </div>
+
+      <!-- Show & Tell dropdown -->
+      <div class="dropdown-parent relative">
+        <button class="dropdown-trigger flex items-center gap-1.5 text-gray-300 hover:text-white text-sm font-semibold transition">
+          <i class="fa-solid fa-camera text-purple-400 text-xs"></i>
+          Show & Tell
+          <i class="fa-solid fa-chevron-down text-[10px] text-gray-500 mt-px transition-transform duration-200"></i>
+        </button>
+        <div class="dropdown-menu hidden absolute top-full left-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden">
+          <a href="/show-and-tell" class="dropdown-item flex items-center gap-2.5 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition">
+            <i class="fa-solid fa-images text-purple-400 w-4 text-center"></i> Gallery
+          </a>
+          <a href="/show-and-tell?submit=true" class="dropdown-item flex items-center gap-2.5 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition">
+            <i class="fa-solid fa-upload text-pink-400 w-4 text-center"></i> Submit a Print
+          </a>
+        </div>
+      </div>
+
+      <!-- Community dropdown -->
+      <div class="dropdown-parent relative">
+        <button class="dropdown-trigger flex items-center gap-1 text-gray-300 hover:text-white text-sm font-semibold transition">
+          <i class="fa-solid fa-users text-indigo-400 text-xs"></i>
+          Community
+          <i class="fa-solid fa-chevron-down text-[10px] text-gray-500 mt-px transition-transform duration-200"></i>
+        </button>
+        <div class="dropdown-menu hidden absolute top-full right-0 mt-2 w-56 bg-gray-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden">
+          <a href="https://discord.gg/makerdeck-226044842126344194" target="_blank" class="dropdown-item flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition">
+            <i class="fa-brands fa-discord text-indigo-400 w-4 text-center"></i> Discord
+          </a>
+          <a href="https://twitch.tv/makerdeck" target="_blank" class="dropdown-item flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition">
+            <i class="fab fa-twitch text-purple-400 w-4 text-center"></i> Twitch
+          </a>
+          <a href="https://youtube.com/@MakerDeck" target="_blank" class="dropdown-item flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition">
+            <i class="fab fa-youtube text-red-500 w-4 text-center"></i> YouTube
+          </a>
+          <a href="https://x.com/makerdeck" target="_blank" class="dropdown-item flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition">
+            <i class="fab fa-x-twitter w-4 text-center"></i> X / Twitter
+          </a>
+          <a href="https://www.instagram.com/makerdeck/" target="_blank" class="dropdown-item flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition">
+            <i class="fab fa-instagram text-pink-500 w-4 text-center"></i> Instagram
+          </a>
+          <a href="https://tiktok.com/@makerdecklive" target="_blank" class="dropdown-item flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition">
+            <i class="fa-brands fa-tiktok text-pink-400 w-4 text-center"></i> TikTok
+          </a>
+          <a href="https://www.facebook.com/groups/makerdeck" target="_blank" class="dropdown-item flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition">
+            <i class="fab fa-facebook text-blue-500 w-4 text-center"></i> Facebook Group
+          </a>
+          <a href="https://bsky.app/profile/makerdeck.net" target="_blank" class="dropdown-item flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition">
+            <i class="fa-brands fa-bluesky text-blue-400 w-4 text-center"></i> Bluesky
+          </a>
+          <a href="https://mastodon.social/@makerdeck" target="_blank" class="dropdown-item flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition">
+            <i class="fa-brands fa-mastodon text-indigo-400 w-4 text-center"></i> Mastodon
+          </a>
+          <a href="https://www.threads.net/@makerdeck" target="_blank" class="dropdown-item flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition">
+            <i class="fa-solid fa-at w-4 text-center"></i> Threads
+          </a>
+          <a href="https://makerdeck.substack.com/" target="_blank" class="dropdown-item flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition">
+            <i class="fa-solid fa-bookmark text-orange-400 w-4 text-center"></i> Substack
+          </a>
+        </div>
       </div>
       <a href="https://twitch.tv/makerdeck" target="_blank" rel="noopener noreferrer" class="bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold py-2 px-5 rounded-full transition shadow-lg shadow-purple-900/20 whitespace-nowrap">
         <i class="fab fa-twitch mr-2"></i>Watch Live
@@ -56,15 +125,27 @@
   class="hidden fixed inset-0 bg-gray-900 z-50 flex flex-col items-center justify-center opacity-0 -translate-y-full transition-all duration-300"
 >
   <button id="mobile-menu-close" class="absolute top-6 right-6 text-gray-400 hover:text-white text-3xl" aria-label="Close menu">&times;</button>
-  <div class="flex flex-col gap-6 text-center">
+  <div class="flex flex-col gap-5 text-center w-full max-w-xs px-6">
     <a href="https://twitch.tv/makerdeck" target="_blank" class="bg-purple-600 text-white font-bold py-3 px-8 rounded-full text-xl shadow-lg">
       <i class="fab fa-twitch mr-2"></i>Watch Live
     </a>
-    <a href="https://discord.gg/makerdeck-226044842126344194" target="_blank" class="text-indigo-400 hover:text-white text-xl font-medium">
+    <div class="border-t border-gray-800"></div>
+    <a href="/" class="text-gray-300 hover:text-white text-lg font-medium mobile-close">
+      <i class="fa-solid fa-house text-purple-400 mr-2"></i>Home
+    </a>
+    <a href="/#maker-apps" class="text-gray-400 hover:text-white text-base mobile-close pl-4">Free Maker Apps</a>
+    <a href="/#get-involved" class="text-gray-400 hover:text-white text-base mobile-close pl-4">Get Involved</a>
+    <a href="/#community-resources" class="text-gray-400 hover:text-white text-base mobile-close pl-4">Community Resources</a>
+    <div class="border-t border-gray-800"></div>
+    <a href="/show-and-tell" class="text-gray-300 hover:text-white text-lg font-medium mobile-close">
+      <i class="fa-solid fa-camera text-purple-400 mr-2"></i>Show & Tell
+    </a>
+    <a href="/show-and-tell" class="text-gray-400 hover:text-white text-base mobile-close pl-4">Gallery</a>
+    <div class="border-t border-gray-800"></div>
+    <a href="https://discord.gg/makerdeck-226044842126344194" target="_blank" class="text-indigo-400 hover:text-white text-lg font-medium">
       <i class="fa-brands fa-discord mr-2"></i>Join Discord
     </a>
-    <a href="#livestream" id="mobile-stream-link" class="text-gray-300 hover:text-white text-xl font-medium">Stream Player</a>
-    <div class="flex flex-wrap justify-center gap-6 max-w-sm mx-auto px-4">
+    <div class="flex flex-wrap justify-center gap-5 pt-2">
       <a href="https://discord.gg/makerdeck-226044842126344194" target="_blank" class="text-gray-400 hover:text-indigo-400 text-2xl"><i class="fa-brands fa-discord"></i></a>
       <a href="https://twitch.tv/makerdeck" target="_blank" class="text-gray-400 hover:text-purple-400 text-2xl"><i class="fab fa-twitch"></i></a>
       <a href="https://x.com/makerdeck" target="_blank" class="text-gray-400 hover:text-white text-2xl"><i class="fab fa-x-twitter"></i></a>
@@ -72,7 +153,7 @@
       <a href="https://www.facebook.com/groups/makerdeck" target="_blank" class="text-gray-400 hover:text-blue-500 text-2xl"><i class="fab fa-facebook"></i></a>
       <a href="https://mastodon.social/@makerdeck" target="_blank" class="text-gray-400 hover:text-indigo-500 text-2xl"><i class="fa-brands fa-mastodon"></i></a>
       <a href="https://bsky.app/profile/makerdeck.net" target="_blank" class="text-gray-400 hover:text-blue-400 text-2xl"><i class="fa-brands fa-bluesky"></i></a>
-      <a href="https://www.threads.net/@makerdeck" target="_blank" class="text-gray-400 hover:text-white text-2xl"><i class="fa-solid fa-at text-2xl"></i></a>
+      <a href="https://www.threads.net/@makerdeck" target="_blank" class="text-gray-400 hover:text-white text-2xl"><i class="fa-solid fa-at"></i></a>
       <a href="https://tiktok.com/@makerdecklive" target="_blank" class="text-gray-400 hover:text-pink-500 text-2xl"><i class="fa-brands fa-tiktok"></i></a>
       <a href="https://www.instagram.com/makerdeck/" target="_blank" class="text-gray-400 hover:text-pink-600 text-2xl"><i class="fab fa-instagram"></i></a>
     </div>
@@ -84,11 +165,44 @@
   .nav-icon:hover { transform: translateY(-2px); }
 </style>
 
-<script>
-  const overlay   = document.getElementById('mobile-menu-overlay')!;
-  const openBtn   = document.getElementById('hamburger-button')!;
-  const closeBtn  = document.getElementById('mobile-menu-close')!;
-  const streamLnk = document.getElementById('mobile-stream-link')!;
+<script is:inline>
+  // ── Dropdowns ──────────────────────────────────────────────────────────────
+  document.querySelectorAll('.dropdown-parent').forEach(parent => {
+    const trigger = parent.querySelector('.dropdown-trigger');
+    const menu    = parent.querySelector('.dropdown-menu');
+    const chevron = trigger.querySelector('.fa-chevron-down');
+    let closeTimer;
+
+    function show() {
+      clearTimeout(closeTimer);
+      menu.classList.remove('hidden');
+      chevron.style.transform = 'rotate(180deg)';
+    }
+    function hide() {
+      closeTimer = setTimeout(() => {
+        menu.classList.add('hidden');
+        chevron.style.transform = '';
+      }, 120);
+    }
+
+    parent.addEventListener('mouseenter', show);
+    parent.addEventListener('mouseleave', hide);
+    menu.addEventListener('mouseenter', () => clearTimeout(closeTimer));
+    trigger.addEventListener('click', () => menu.classList.contains('hidden') ? show() : hide());
+  });
+
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.dropdown-parent')) {
+      document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
+      document.querySelectorAll('.fa-chevron-down').forEach(c => c.style.transform = '');
+    }
+  });
+
+  // ── Mobile menu ────────────────────────────────────────────────────────────
+  const overlay  = document.getElementById('mobile-menu-overlay');
+  const openBtn  = document.getElementById('hamburger-button');
+  const closeBtn = document.getElementById('mobile-menu-close');
 
   function openMenu() {
     overlay.classList.remove('hidden');
@@ -97,7 +211,6 @@
       document.body.classList.add('overflow-hidden');
     });
   }
-
   function closeMenu() {
     overlay.classList.add('opacity-0', '-translate-y-full');
     document.body.classList.remove('overflow-hidden');
@@ -106,5 +219,5 @@
 
   openBtn.addEventListener('click', openMenu);
   closeBtn.addEventListener('click', closeMenu);
-  streamLnk.addEventListener('click', closeMenu);
+  document.querySelectorAll('.mobile-close').forEach(el => el.addEventListener('click', closeMenu));
 </script>

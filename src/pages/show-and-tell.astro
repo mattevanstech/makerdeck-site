@@ -367,6 +367,13 @@ function formatDate(iso: string): string {
 
   document.getElementById('open-modal-btn')?.addEventListener('click', openModal);
   document.getElementById('open-modal-btn-empty')?.addEventListener('click', openModal);
+
+  // Auto-open when landing with ?submit=true (e.g. from navbar "Submit a Print")
+  if (new URLSearchParams(window.location.search).get('submit') === 'true') {
+    openModal();
+    // Clean up the URL so it doesn't reopen on refresh
+    history.replaceState(null, '', window.location.pathname);
+  }
   document.getElementById('close-modal-btn')?.addEventListener('click', closeModal);
   backdrop.addEventListener('click', closeModal);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
