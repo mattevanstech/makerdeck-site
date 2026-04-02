@@ -1,14 +1,9 @@
-name: Discord Show & Tell Notifier
-
+name: Discord Show and Tell Notifier
 
 on:
   schedule:
-    # Run every hour at :00
-    - cron: '0 * * * *'→ Runs every hour
-
+    - cron: '0 * * * *'
   workflow_dispatch:
-    # Allow manual runs from the GitHub Actions tab
-
 
 jobs:
   notify:
@@ -25,4 +20,3 @@ jobs:
             echo "Cron endpoint returned non-200 status"
             exit 1
           fi
-
