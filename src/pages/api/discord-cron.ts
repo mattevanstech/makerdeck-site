@@ -60,7 +60,7 @@ export const GET: APIRoute = async ({ request }) => {
           image:       photoUrl ? { url: photoUrl } : undefined,
           fields: [
             ...(modelSource ? [{ name: '🔗 Model Source', value: modelSource, inline: false }] : []),
-            { name: '👤 Maker', value: submitter ? `@${submitter}` : 'Anonymous', inline: true },
+            { name: '👤 Maker', value: submitter ? `@${submitter.replace(/^@/, '')}` : 'Anonymous', inline: true },
           ],
           footer:    { text: 'MakerDeck Show & Tell · makerdeck.net/show-and-tell' },
           timestamp: new Date().toISOString(),
