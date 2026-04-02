@@ -153,16 +153,7 @@ function formatDate(iso: string): string {
 
   <Footer />
 
-  <!-- ── Floating Share Button ───────────────────────────────────────────────── -->
-  <button
-    id="open-modal-btn-float"
-    class="fixed bottom-8 right-8 z-40 flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-5 rounded-full shadow-xl shadow-purple-900/40 transition transform hover:-translate-y-1"
-  >
-    <i class="fa-solid fa-upload"></i>
-    <span class="hidden sm:inline">Share a Print</span>
-  </button>
-
-  <!-- ── Submit Modal ───────────────────────────────────────────────────────── -->
+<!-- ── Submit Modal ───────────────────────────────────────────────────────── -->
   <div
     id="modal-overlay"
     class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -375,7 +366,6 @@ function formatDate(iso: string): string {
   }
 
   document.getElementById('open-modal-btn')?.addEventListener('click', openModal);
-  document.getElementById('open-modal-btn-float')?.addEventListener('click', openModal);
   document.getElementById('open-modal-btn-empty')?.addEventListener('click', openModal);
   document.getElementById('close-modal-btn')?.addEventListener('click', closeModal);
   backdrop.addEventListener('click', closeModal);
