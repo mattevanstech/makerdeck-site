@@ -1,0 +1,24 @@
+name: Discord Show & Tell Notifier
+
+on:
+  schedule:
+    # Run every hour at :00
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    # Allow manual runs from the GitHub Actions tab
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Discord notification cron
+        run: |
+          HTTP_STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://makerdeck.net/api/discord-cron)
+          echo "HTTP status: $HTTP_STATUS"
+          cat /tmp/response.txt
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "Cron endpoint returned non-200 status"
+            exit 1
+          fi
