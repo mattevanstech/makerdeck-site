@@ -42,8 +42,41 @@ function formatDate(iso: string): string {
     </div>
   </section>
 
+  <!-- Search bar (only shown when there are submissions) -->
+  {submissions.length > 0 && (
+    <section class="bg-[#0d1117] px-6 pt-10 pb-2">
+      <div class="container mx-auto max-w-7xl">
+        <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+          <!-- Search input -->
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none"></i>
+            <input
+              type="text"
+              id="gallery-search"
+              placeholder="Search by title or username…"
+              autocomplete="off"
+              class="w-full bg-[#161b22] border border-gray-700 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition text-sm"
+            />
+          </div>
+          <!-- Source filter pills -->
+          <div class="flex gap-2 shrink-0">
+            <button data-filter="all"     class="filter-btn active-filter px-4 py-2 rounded-xl text-sm font-semibold transition">All</button>
+            <button data-filter="Web"     class="filter-btn px-4 py-2 rounded-xl text-sm font-semibold transition">
+              <i class="fa-solid fa-globe mr-1"></i>Web
+            </button>
+            <button data-filter="Discord" class="filter-btn px-4 py-2 rounded-xl text-sm font-semibold transition">
+              <i class="fa-brands fa-discord mr-1"></i>Discord
+            </button>
+          </div>
+        </div>
+        <!-- Result count -->
+        <p id="result-count" class="text-gray-600 text-xs mt-3"></p>
+      </div>
+    </section>
+  )}
+
   <!-- Gallery -->
-  <section class="py-16 px-6 bg-[#0d1117]">
+  <section class="py-10 px-6 bg-[#0d1117]">
     <div class="container mx-auto max-w-7xl">
 
       {submissions.length === 0 ? (
@@ -56,9 +89,14 @@ function formatDate(iso: string): string {
           </button>
         </div>
       ) : (
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {submissions.map((s: ShowAndTellSubmission) => (
-            <article class="bg-[#161b22] rounded-xl border border-white/5 overflow-hidden hover:border-purple-500/40 transition-all duration-300 hover:-translate-y-1 flex flex-col group">
+            <article
+              class="gallery-card bg-[#161b22] rounded-xl border border-white/5 overflow-hidden hover:border-purple-500/40 transition-all duration-300 hover:-translate-y-1 flex flex-col group"
+              data-name={s.name.toLowerCase()}
+              data-submitter={s.submitter.toLowerCase()}
+              data-source={s.source}
+            >
               <!-- Photo -->
               <div class="relative aspect-square overflow-hidden bg-gray-900">
                 <img
@@ -103,6 +141,13 @@ function formatDate(iso: string): string {
           ))}
         </div>
       )}
+
+      <!-- No search results state (hidden by default, shown by JS) -->
+      <div id="no-results" class="hidden text-center py-20">
+        <div class="text-5xl mb-4">🔍</div>
+        <h3 class="text-xl font-bold text-white mb-2">No prints found</h3>
+        <p class="text-gray-400 text-sm">Try a different search term or filter.</p>
+      </div>
     </div>
   </section>
 
@@ -249,6 +294,69 @@ function formatDate(iso: string): string {
 </Layout>
 
 <script>
+  // ── Gallery search & filter ───────────────────────────────────────────────────
+  const searchInput  = document.getElementById('gallery-search') as HTMLInputElement | null;
+  const filterBtns   = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+  const cards        = document.querySelectorAll<HTMLElement>('.gallery-card');
+  const noResults    = document.getElementById('no-results')!;
+  const resultCount  = document.getElementById('result-count');
+
+  let activeSource = 'all';
+  let searchQuery  = '';
+
+  // Style helpers
+  function setFilterStyles() {
+    filterBtns.forEach(btn => {
+      const isActive = btn.dataset.filter === activeSource;
+      btn.className = isActive
+        ? 'filter-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-purple-600 text-white'
+        : 'filter-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-[#161b22] text-gray-400 border border-gray-700 hover:border-purple-500/50 hover:text-white';
+    });
+  }
+
+  function applyFilters() {
+    let visible = 0;
+    cards.forEach(card => {
+      const matchesSearch =
+        !searchQuery ||
+        card.dataset.name!.includes(searchQuery) ||
+        card.dataset.submitter!.includes(searchQuery) ||
+        card.dataset.source!.toLowerCase().includes(searchQuery);
+      const matchesSource =
+        activeSource === 'all' || card.dataset.source === activeSource;
+
+      const show = matchesSearch && matchesSource;
+      card.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    // Show/hide "no results" message
+    noResults?.classList.toggle('hidden', visible > 0);
+
+    // Update result count label
+    if (resultCount) {
+      resultCount.textContent = searchQuery || activeSource !== 'all'
+        ? `${visible} print${visible !== 1 ? 's' : ''} found`
+        : '';
+    }
+  }
+
+  // Initial style pass
+  setFilterStyles();
+
+  searchInput?.addEventListener('input', () => {
+    searchQuery = searchInput.value.trim().toLowerCase();
+    applyFilters();
+  });
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeSource = btn.dataset.filter!;
+      setFilterStyles();
+      applyFilters();
+    });
+  });
+
   // ── Modal open / close ────────────────────────────────────────────────────────
   const overlay  = document.getElementById('modal-overlay')!;
   const backdrop = document.getElementById('modal-backdrop')!;
