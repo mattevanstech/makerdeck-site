@@ -449,6 +449,7 @@ function formatDate(iso: string): string {
     document.body.style.overflow = 'hidden';
     document.getElementById('form-success')!.classList.add('hidden');
     document.getElementById('form-error')!.classList.add('hidden');
+    loadRemembered();
   }
 
   function closeModal() {
@@ -484,12 +485,17 @@ function formatDate(iso: string): string {
 
   function loadRemembered() {
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
+      const _n = document.getElementById('name') as HTMLInputElement;
+      const _s = document.getElementById('submitter') as HTMLInputElement;
+      const _m = document.getElementById('mastodonHandle') as HTMLInputElement | null;
+      const _r = document.getElementById('remember-me') as HTMLInputElement;
+      const raw = window['localStorage'].getItem('makerdeck_sat_remember');
+      const saved = JSON.parse(raw ?? 'null');
       if (!saved) return;
-      if (nameInput && saved.name)         nameInput.value = saved.name;
-      if (submitterInp && saved.submitter) submitterInp.value = saved.submitter;
-      if (mastodonInp && saved.mastodon)   mastodonInp.value = saved.mastodon;
-      if (rememberChk) rememberChk.checked = true;
+      if (_n && saved.name) _n.value = saved.name;
+      if (_s && saved.submitter) _s.value = saved.submitter;
+      if (_m && saved.mastodon) _m.value = saved.mastodon;
+      if (_r) _r.checked = true;
     } catch {}
   }
 
@@ -507,14 +513,6 @@ function formatDate(iso: string): string {
     try { localStorage.removeItem(STORAGE_KEY); } catch {}
   }
 
-  // Load saved values whenever the modal opens
-  const _origOpenModal = openModal;
-  function openModal() {
-    _origOpenModal();
-    if (rememberChk && !rememberChk.checked) loadRemembered();
-  }
-  // Also load on first paint in case modal starts open
-  loadRemembered();
 
   rememberChk?.addEventListener('change', () => {
     if (!rememberChk.checked) clearRemembered();
