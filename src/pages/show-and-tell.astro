@@ -5,6 +5,8 @@ import Footer from '../components/Footer.astro';
 import { getShowAndTellSubmissions } from '../lib/notion';
 import type { ShowAndTellSubmission } from '../lib/notion';
 
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
+
 Astro.response.headers.set('Cache-Control', 's-maxage=30, stale-while-revalidate=120');
 
 const submissions = await getShowAndTellSubmissions();
@@ -54,7 +56,7 @@ function formatDate(iso: string): string {
             <input
               type="text"
               id="gallery-search"
-              placeholder="Search by title or username…"
+              placeholder="Search by title or username\u2026"
               autocomplete="off"
               class="w-full bg-[#161b22] border border-gray-700 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition text-sm"
             />
@@ -82,7 +84,7 @@ function formatDate(iso: string): string {
 
       {submissions.length === 0 ? (
         <div class="text-center py-24">
-          <div class="text-6xl mb-6">🖨️</div>
+          <div class="text-6xl mb-6">\uD83D\uDDA8\uFE0F</div>
           <h2 class="text-2xl font-bold text-white mb-3">No prints yet!</h2>
           <p class="text-gray-400 mb-8">Be the first to share what you've been building.</p>
           <button id="open-modal-btn-empty" class="text-purple-400 hover:text-purple-300 font-semibold">
@@ -145,7 +147,7 @@ function formatDate(iso: string): string {
 
       <!-- No search results state (hidden by default, shown by JS) -->
       <div id="no-results" class="hidden text-center py-20">
-        <div class="text-5xl mb-4">🔍</div>
+        <div class="text-5xl mb-4">\uD83D\uDD0D</div>
         <h3 class="text-xl font-bold text-white mb-2">No prints found</h3>
         <p class="text-gray-400 text-sm">Try a different search term or filter.</p>
       </div>
@@ -154,7 +156,7 @@ function formatDate(iso: string): string {
 
   <Footer />
 
-<!-- ── Submit Modal ───────────────────────────────────────────────────────── -->
+<!-- \u2500\u2500 Submit Modal \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 -->
   <div
     id="modal-overlay"
     class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -199,7 +201,7 @@ function formatDate(iso: string): string {
               <div id="drop-zone-text">
                 <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-600 mb-2 block"></i>
                 <p class="text-gray-400 font-medium text-sm">Drop your photo here or <span class="text-purple-400">browse</span></p>
-                <p class="text-gray-600 text-xs mt-1">JPG, PNG, WEBP — auto-compressed on upload</p>
+                <p class="text-gray-600 text-xs mt-1">JPG, PNG, WEBP \u2014 auto-compressed on upload</p>
               </div>
               <input type="file" id="photo-input" name="photo" accept="image/*" class="hidden" />
             </div>
@@ -226,7 +228,7 @@ function formatDate(iso: string): string {
               id="description"
               name="description"
               rows="3"
-              placeholder="Tell us about it — filament, settings, anything interesting…"
+              placeholder="Tell us about it \u2014 filament, settings, anything interesting\u2026"
               class="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition resize-none"
             ></textarea>
           </div>
@@ -238,7 +240,7 @@ function formatDate(iso: string): string {
               type="url"
               id="modelSource"
               name="modelSource"
-              placeholder="https://www.printables.com/model/…"
+              placeholder="https://www.printables.com/model/\u2026"
               class="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition"
             />
           </div>
@@ -256,6 +258,17 @@ function formatDate(iso: string): string {
               class="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition"
             />
           </div>
+
+          <!-- Honeypot — hidden from real users, bots tend to fill this in -->
+          <div aria-hidden="true" style="position:absolute;opacity:0;top:-9999px;left:-9999px;height:0;overflow:hidden;">
+            <label for="website">Website</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <!-- Turnstile widget -->
+          {turnstileSiteKey && (
+            <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-theme="dark"></div>
+          )}
 
           <!-- Submit button -->
           <button
@@ -285,8 +298,10 @@ function formatDate(iso: string): string {
 
 </Layout>
 
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
 <script>
-  // ── Gallery search & filter ───────────────────────────────────────────────────
+  // \u2500\u2500 Gallery search & filter \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const searchInput  = document.getElementById('gallery-search') as HTMLInputElement | null;
   const filterBtns   = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
   const cards        = document.querySelectorAll<HTMLElement>('.gallery-card');
@@ -349,7 +364,7 @@ function formatDate(iso: string): string {
     });
   });
 
-  // ── Modal open / close ────────────────────────────────────────────────────────
+  // \u2500\u2500 Modal open / close \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const overlay  = document.getElementById('modal-overlay')!;
   const backdrop = document.getElementById('modal-backdrop')!;
 
@@ -379,7 +394,7 @@ function formatDate(iso: string): string {
   backdrop.addEventListener('click', closeModal);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-  // ── Photo drop zone ──────────────────────────────────────────────────────────
+  // \u2500\u2500 Photo drop zone \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const dropZone  = document.getElementById('drop-zone')!;
   const fileInput = document.getElementById('photo-input') as HTMLInputElement;
   const preview   = document.getElementById('photo-preview') as HTMLImageElement;
@@ -403,7 +418,7 @@ function formatDate(iso: string): string {
     if (file) showPreview(file);
   });
 
-  // ── Image compression ────────────────────────────────────────────────────────
+  // \u2500\u2500 Image compression \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   function compressImage(file: File): Promise<File> {
     return new Promise((resolve) => {
       const img = new Image();
@@ -452,7 +467,7 @@ function formatDate(iso: string): string {
     fileInput.files = dt.files;
   }
 
-  // ── Form submission ──────────────────────────────────────────────────────────
+  // \u2500\u2500 Form submission \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const form     = document.getElementById('submit-form') as HTMLFormElement;
   const btn      = document.getElementById('submit-btn') as HTMLButtonElement;
   const btnText  = document.getElementById('submit-btn-text')!;
@@ -462,7 +477,7 @@ function formatDate(iso: string): string {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     btn.disabled = true;
-    btnText.textContent = 'Uploading…';
+    btnText.textContent = 'Uploading\u2026';
     success.classList.add('hidden');
     errorBox.classList.add('hidden');
 
@@ -470,7 +485,7 @@ function formatDate(iso: string): string {
       const file = fileInput.files?.[0];
       if (!file) throw new Error('No photo selected');
 
-      // Encode compressed photo as base64 — Vercel blocks multipart/form-data POSTs
+      // Encode compressed photo as base64 \u2014 Vercel blocks multipart/form-data POSTs
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload  = () => resolve((reader.result as string).split(',')[1]);
@@ -478,17 +493,23 @@ function formatDate(iso: string): string {
         reader.readAsDataURL(file);
       });
 
+      // Gather honeypot + Turnstile token
+      const honeypot      = (document.getElementById('website') as HTMLInputElement)?.value ?? '';
+      const turnstileToken = (document.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement)?.value ?? '';
+
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name:        (document.getElementById('name')        as HTMLInputElement).value.trim(),
-          description: (document.getElementById('description') as HTMLTextAreaElement).value.trim(),
-          modelSource: (document.getElementById('modelSource') as HTMLInputElement).value.trim(),
-          submitter:   (document.getElementById('submitter')   as HTMLInputElement).value.trim(),
-          fileName:    file.name,
-          fileType:    file.type || 'image/jpeg',
-          fileData:    base64,
+          name:          (document.getElementById('name')        as HTMLInputElement).value.trim(),
+          description:   (document.getElementById('description') as HTMLTextAreaElement).value.trim(),
+          modelSource:   (document.getElementById('modelSource') as HTMLInputElement).value.trim(),
+          submitter:     (document.getElementById('submitter')   as HTMLInputElement).value.trim(),
+          fileName:      file.name,
+          fileType:      file.type || 'image/jpeg',
+          fileData:      base64,
+          website:       honeypot,
+          turnstileToken,
         }),
       });
 
