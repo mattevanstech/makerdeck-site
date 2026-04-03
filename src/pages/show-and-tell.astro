@@ -185,7 +185,7 @@ function formatDate(iso: string): string {
       </div>
 
       <!-- Scrollable form area -->
-      <div class="overflow-y-auto">
+      <div class="overflow-y-auto modal-scroll">
         <form id="submit-form" class="p-6 space-y-5">
 
           <!-- Photo upload -->
@@ -273,6 +273,20 @@ function formatDate(iso: string): string {
             />
           </div>
 
+
+          <!-- Remember Me -->
+          <div class="flex items-center gap-3 pt-1">
+            <input
+              type="checkbox"
+              id="remember-me"
+              name="remember-me"
+              class="w-4 h-4 rounded border-gray-600 bg-[#0d1117] accent-purple-500 cursor-pointer"
+            />
+            <label for="remember-me" class="text-sm text-gray-400 cursor-pointer select-none">
+              Remember me — save my name and handles for next time
+            </label>
+          </div>
+
           <!-- Honeypot — hidden from real users, bots tend to fill this in -->
           <div aria-hidden="true" style="position:absolute;opacity:0;top:-9999px;left:-9999px;height:0;overflow:hidden;">
             <label for="website">Website</label>
@@ -336,6 +350,25 @@ function formatDate(iso: string): string {
       <p id="lightbox-title" class="text-white font-semibold mt-4 text-lg text-center"></p>
     </div>
   </div>
+
+
+<style>
+  /* Custom scrollbar for the modal form */
+  .modal-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .modal-scroll::-webkit-scrollbar-track {
+    background: #0d1117;
+    border-radius: 3px;
+  }
+  .modal-scroll::-webkit-scrollbar-thumb {
+    background: #30363d;
+    border-radius: 3px;
+  }
+  .modal-scroll::-webkit-scrollbar-thumb:hover {
+    background: #6e40c9;
+  }
+</style>
 
 </Layout>
 
@@ -416,6 +449,7 @@ function formatDate(iso: string): string {
     document.body.style.overflow = 'hidden';
     document.getElementById('form-success')!.classList.add('hidden');
     document.getElementById('form-error')!.classList.add('hidden');
+    loadRemembered();
   }
 
   function closeModal() {
@@ -440,6 +474,47 @@ function formatDate(iso: string): string {
         closeModal();
       }
     }
+  });
+
+  // ── Remember Me ──────────────────────────────────────────────────────────────
+  const STORAGE_KEY = 'makerdeck_sat_remember';
+  const rememberChk  = document.getElementById('remember-me') as HTMLInputElement;
+  const nameInput    = document.getElementById('name') as HTMLInputElement;
+  const submitterInp = document.getElementById('submitter') as HTMLInputElement;
+  const mastodonInp  = document.getElementById('mastodonHandle') as HTMLInputElement | null;
+
+  function loadRemembered() {
+    try {
+      const _s = document.getElementById('submitter') as HTMLInputElement;
+      const _m = document.getElementById('mastodonHandle') as HTMLInputElement | null;
+      const _r = document.getElementById('remember-me') as HTMLInputElement;
+      const raw = window['localStorage'].getItem('makerdeck_sat_remember');
+      const saved = JSON.parse(raw ?? 'null');
+      if (!saved) return;
+      if (_s && saved.submitter) _s.value = saved.submitter;
+      if (_m && saved.mastodon) _m.value = saved.mastodon;
+      if (_r) _r.checked = true;
+    } catch {}
+  }
+
+  function saveRemembered() {
+    try {
+      const _s = document.getElementById('submitter') as HTMLInputElement;
+      const _m = document.getElementById('mastodonHandle') as HTMLInputElement | null;
+      window['localStorage'].setItem('makerdeck_sat_remember', JSON.stringify({
+        submitter: _s?.value.trim() ?? '',
+        mastodon: _m?.value.trim() ?? '',
+      }));
+    } catch {}
+  }
+
+  function clearRemembered() {
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  }
+
+
+  rememberChk?.addEventListener('change', () => {
+    if (!rememberChk.checked) clearRemembered();
   });
 
   // ── Lightbox ─────────────────────────────────────────────────────────────────
@@ -594,6 +669,10 @@ function formatDate(iso: string): string {
       });
 
       if (!res.ok) throw new Error('Failed');
+
+      // Save details if remember-me is checked
+      if (rememberChk?.checked) saveRemembered();
+      else clearRemembered();
 
       success.classList.remove('hidden');
       form.reset();
