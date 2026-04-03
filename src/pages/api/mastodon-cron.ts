@@ -101,10 +101,10 @@ export const GET: APIRoute = async ({ request }) => {
           ? `\n\nMaker: ${mastodonHandle.trim().startsWith('@') ? mastodonHandle.trim() : '@' + mastodonHandle.trim()}`
           : submitter ? `\n\nMaker: ${submitter}` : '';
 
-        const modelLine = modelSource ? `\n\n\uD83D\uDD17 ${modelSource}` : '';
+        const modelLine = modelSource ? `\n\n🔗 ${modelSource}` : '';
 
         const statusText =
-          `\uD83D\uDDB6\uFE0F ${name}${handleTag}` +
+          `🖨️ ${name}${handleTag}` +
           (description ? `\n\n${description}` : '') +
           modelLine +
           `\n\n#3DPrinting #MakerDeck`;
