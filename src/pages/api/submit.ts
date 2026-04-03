@@ -34,8 +34,8 @@ async function uploadToR2(
   const url     = `https://${host}/${bucket}/${key}`;
 
   const now      = new Date();
-  const ymd      = now.toISOString().slice(0, 10).replace(/-/g, '');           // 20240101
-  const datetime = ymd + 'T' + now.toISOString().slice(11, 19).replace(/:/g, '') + 'Z'; // 20240101T120000Z
+  const ymd      = now.toISOString().slice(0, 10).replace(/-/g, '');
+  const datetime = ymd + 'T' + now.toISOString().slice(11, 19).replace(/:/g, '') + 'Z';
 
   const payloadHash = toHex(await sha256(body));
 
@@ -49,7 +49,7 @@ async function uploadToR2(
   const canonicalRequest = [
     'PUT',
     `/${bucket}/${key}`,
-    '',   // no query string
+    '',
     canonicalHeaders,
     signedHeaders,
     payloadHash,
@@ -97,11 +97,45 @@ async function uploadToR2(
 export const POST: APIRoute = async ({ request }) => {
   try {
     // Accept JSON (not multipart/form-data) so Vercel's CSRF guard doesn't block it
-    const { name, description, modelSource, submitter, fileName, fileType, fileData } =
+    const { name, description, modelSource, submitter, fileName, fileType, fileData, website, turnstileToken } =
       await request.json() as {
         name: string; description: string; modelSource: string; submitter: string;
         fileName: string; fileType: string; fileData: string;
+        website?: string; turnstileToken?: string;
       };
+
+    // ── Honeypot check ──────────────────────────────────────────────────────────
+    // Real users never see this field — if it's filled, it's almost certainly a bot.
+    // Return 200 silently so bots don't know they were rejected.
+    if (website) {
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ── Turnstile verification ──────────────────────────────────────────────────
+    const turnstileSecret = import.meta.env.TURNSTILE_SECRET_KEY;
+    if (turnstileSecret) {
+      if (!turnstileToken) {
+        return new Response(JSON.stringify({ error: 'Please complete the verification.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      const verifyRes  = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ secret: turnstileSecret, response: turnstileToken }),
+      });
+      const verifyData = await verifyRes.json() as { success: boolean };
+      if (!verifyData.success) {
+        return new Response(JSON.stringify({ error: 'Verification failed. Please try again.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
     // Validate required fields
     if (!name?.trim() || !submitter?.trim() || !fileData) {
