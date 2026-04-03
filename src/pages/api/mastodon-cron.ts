@@ -104,7 +104,7 @@ export const GET: APIRoute = async ({ request }) => {
         const modelLine = modelSource ? `\n\n🔗 ${modelSource}` : '';
 
         const statusText =
-          `🖨️ ${name}${handleTag}` +
+          `${name}${handleTag}` +
           (description ? `\n\n${description}` : '') +
           modelLine +
           `\n\n#3DPrinting #MakerDeck`;
