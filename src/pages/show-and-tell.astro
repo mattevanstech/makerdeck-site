@@ -49,28 +49,16 @@ function formatDate(iso: string): string {
   {submissions.length > 0 && (
     <section class="bg-[#0d1117] px-6 pt-10 pb-2">
       <div class="container mx-auto max-w-7xl">
-        <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-          <!-- Search input -->
-          <div class="relative flex-1">
-            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none"></i>
-            <input
-              type="text"
-              id="gallery-search"
-              placeholder="Search by title or username\u2026"
-              autocomplete="off"
-              class="w-full bg-[#161b22] border border-gray-700 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition text-sm"
-            />
-          </div>
-          <!-- Source filter pills -->
-          <div class="flex gap-2 shrink-0">
-            <button data-filter="all"     class="filter-btn active-filter px-4 py-2 rounded-xl text-sm font-semibold transition">All</button>
-            <button data-filter="Web"     class="filter-btn px-4 py-2 rounded-xl text-sm font-semibold transition">
-              <i class="fa-solid fa-globe mr-1"></i>Web
-            </button>
-            <button data-filter="Discord" class="filter-btn px-4 py-2 rounded-xl text-sm font-semibold transition">
-              <i class="fa-brands fa-discord mr-1"></i>Discord
-            </button>
-          </div>
+        <!-- Search input -->
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none"></i>
+          <input
+            type="text"
+            id="gallery-search"
+            placeholder="Search by title or username…"
+            autocomplete="off"
+            class="w-full bg-[#161b22] border border-gray-700 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition text-sm"
+          />
         </div>
         <!-- Result count -->
         <p id="result-count" class="text-gray-600 text-xs mt-3"></p>
@@ -84,7 +72,7 @@ function formatDate(iso: string): string {
 
       {submissions.length === 0 ? (
         <div class="text-center py-24">
-          <div class="text-6xl mb-6">\uD83D\uDDA8\uFE0F</div>
+          <div class="text-6xl mb-6">🖨️</div>
           <h2 class="text-2xl font-bold text-white mb-3">No prints yet!</h2>
           <p class="text-gray-400 mb-8">Be the first to share what you've been building.</p>
           <button id="open-modal-btn-empty" class="text-purple-400 hover:text-purple-300 font-semibold">
@@ -98,7 +86,6 @@ function formatDate(iso: string): string {
               class="gallery-card bg-[#161b22] rounded-xl border border-white/5 overflow-hidden hover:border-purple-500/40 transition-all duration-300 hover:-translate-y-1 flex flex-col group"
               data-name={s.name.toLowerCase()}
               data-submitter={s.submitter.toLowerCase()}
-              data-source={s.source === 'Discord' ? 'Discord' : 'Web'}
             >
               <!-- Photo -->
               <div class="relative aspect-square overflow-hidden bg-gray-900">
@@ -108,11 +95,6 @@ function formatDate(iso: string): string {
                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
-                <div class="absolute top-3 right-3">
-                  <span class={`text-xs font-bold px-2 py-1 rounded-full ${s.source === 'Discord' ? 'bg-indigo-600 text-white' : 'bg-purple-600 text-white'}`}>
-                    {s.source === 'Discord' ? <span><i class="fa-brands fa-discord mr-1"></i>Discord</span> : <span><i class="fa-solid fa-globe mr-1"></i>Web</span>}
-                  </span>
-                </div>
               </div>
 
               <!-- Info -->
@@ -147,16 +129,16 @@ function formatDate(iso: string): string {
 
       <!-- No search results state (hidden by default, shown by JS) -->
       <div id="no-results" class="hidden text-center py-20">
-        <div class="text-5xl mb-4">\uD83D\uDD0D</div>
+        <div class="text-5xl mb-4">🔍</div>
         <h3 class="text-xl font-bold text-white mb-2">No prints found</h3>
-        <p class="text-gray-400 text-sm">Try a different search term or filter.</p>
+        <p class="text-gray-400 text-sm">Try a different search term.</p>
       </div>
     </div>
   </section>
 
   <Footer />
 
-<!-- \u2500\u2500 Submit Modal \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 -->
+<!-- ── Submit Modal ────────────────────────────────────────────────────── -->
   <div
     id="modal-overlay"
     class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -201,7 +183,7 @@ function formatDate(iso: string): string {
               <div id="drop-zone-text">
                 <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-600 mb-2 block"></i>
                 <p class="text-gray-400 font-medium text-sm">Drop your photo here or <span class="text-purple-400">browse</span></p>
-                <p class="text-gray-600 text-xs mt-1">JPG, PNG, WEBP \u2014 auto-compressed on upload</p>
+                <p class="text-gray-600 text-xs mt-1">JPG, PNG, WEBP — auto-compressed on upload</p>
               </div>
               <input type="file" id="photo-input" name="photo" accept="image/*" class="hidden" />
             </div>
@@ -228,7 +210,7 @@ function formatDate(iso: string): string {
               id="description"
               name="description"
               rows="3"
-              placeholder="Tell us about it \u2014 filament, settings, anything interesting\u2026"
+              placeholder="Tell us about it — filament, settings, anything interesting…"
               class="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition resize-none"
             ></textarea>
           </div>
@@ -240,7 +222,7 @@ function formatDate(iso: string): string {
               type="url"
               id="modelSource"
               name="modelSource"
-              placeholder="https://www.printables.com/model/\u2026"
+              placeholder="https://www.printables.com/model/…"
               class="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition"
             />
           </div>
@@ -301,70 +283,31 @@ function formatDate(iso: string): string {
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <script>
-  // \u2500\u2500 Gallery search & filter \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  const searchInput  = document.getElementById('gallery-search') as HTMLInputElement | null;
-  const filterBtns   = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
-  const cards        = document.querySelectorAll<HTMLElement>('.gallery-card');
-  const noResults    = document.getElementById('no-results')!;
-  const resultCount  = document.getElementById('result-count');
+  // ── Gallery search ───────────────────────────────────────────────────────────────────────
+  const searchInput = document.getElementById('gallery-search') as HTMLInputElement | null;
+  const cards       = document.querySelectorAll<HTMLElement>('.gallery-card');
+  const noResults   = document.getElementById('no-results')!;
+  const resultCount = document.getElementById('result-count');
 
-  let activeSource = 'all';
-  let searchQuery  = '';
-
-  // Style helpers
-  function setFilterStyles() {
-    filterBtns.forEach(btn => {
-      const isActive = btn.dataset.filter === activeSource;
-      btn.className = isActive
-        ? 'filter-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-purple-600 text-white'
-        : 'filter-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-[#161b22] text-gray-400 border border-gray-700 hover:border-purple-500/50 hover:text-white';
-    });
-  }
-
-  function applyFilters() {
+  function applySearch() {
+    const query = searchInput?.value.trim().toLowerCase() ?? '';
     let visible = 0;
     cards.forEach(card => {
-      const matchesSearch =
-        !searchQuery ||
-        card.dataset.name!.includes(searchQuery) ||
-        card.dataset.submitter!.includes(searchQuery) ||
-        card.dataset.source!.toLowerCase().includes(searchQuery);
-      const matchesSource =
-        activeSource === 'all' || card.dataset.source === activeSource;
-
-      const show = matchesSearch && matchesSource;
+      const show = !query ||
+        card.dataset.name!.includes(query) ||
+        card.dataset.submitter!.includes(query);
       card.style.display = show ? '' : 'none';
       if (show) visible++;
     });
-
-    // Show/hide "no results" message
     noResults?.classList.toggle('hidden', visible > 0);
-
-    // Update result count label
     if (resultCount) {
-      resultCount.textContent = searchQuery || activeSource !== 'all'
-        ? `${visible} print${visible !== 1 ? 's' : ''} found`
-        : '';
+      resultCount.textContent = query ? `${visible} print${visible !== 1 ? 's' : ''} found` : '';
     }
   }
 
-  // Initial style pass
-  setFilterStyles();
+  searchInput?.addEventListener('input', applySearch);
 
-  searchInput?.addEventListener('input', () => {
-    searchQuery = searchInput.value.trim().toLowerCase();
-    applyFilters();
-  });
-
-  filterBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      activeSource = btn.dataset.filter!;
-      setFilterStyles();
-      applyFilters();
-    });
-  });
-
-  // \u2500\u2500 Modal open / close \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // ── Modal open / close ──────────────────────────────────────────────────────────────
   const overlay  = document.getElementById('modal-overlay')!;
   const backdrop = document.getElementById('modal-backdrop')!;
 
@@ -394,7 +337,7 @@ function formatDate(iso: string): string {
   backdrop.addEventListener('click', closeModal);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-  // \u2500\u2500 Photo drop zone \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // ── Photo drop zone ──────────────────────────────────────────────────────────────────
   const dropZone  = document.getElementById('drop-zone')!;
   const fileInput = document.getElementById('photo-input') as HTMLInputElement;
   const preview   = document.getElementById('photo-preview') as HTMLImageElement;
@@ -418,7 +361,7 @@ function formatDate(iso: string): string {
     if (file) showPreview(file);
   });
 
-  // \u2500\u2500 Image compression \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // ── Image compression ─────────────────────────────────────────────────────────────────────
   function compressImage(file: File): Promise<File> {
     return new Promise((resolve) => {
       const img = new Image();
@@ -467,7 +410,7 @@ function formatDate(iso: string): string {
     fileInput.files = dt.files;
   }
 
-  // \u2500\u2500 Form submission \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // ── Form submission ─────────────────────────────────────────────────────────────────────────────
   const form     = document.getElementById('submit-form') as HTMLFormElement;
   const btn      = document.getElementById('submit-btn') as HTMLButtonElement;
   const btnText  = document.getElementById('submit-btn-text')!;
@@ -477,7 +420,7 @@ function formatDate(iso: string): string {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     btn.disabled = true;
-    btnText.textContent = 'Uploading\u2026';
+    btnText.textContent = 'Uploading…';
     success.classList.add('hidden');
     errorBox.classList.add('hidden');
 
@@ -485,7 +428,7 @@ function formatDate(iso: string): string {
       const file = fileInput.files?.[0];
       if (!file) throw new Error('No photo selected');
 
-      // Encode compressed photo as base64 \u2014 Vercel blocks multipart/form-data POSTs
+      // Encode compressed photo as base64 — Vercel blocks multipart/form-data POSTs
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload  = () => resolve((reader.result as string).split(',')[1]);
