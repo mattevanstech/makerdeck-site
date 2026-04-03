@@ -14,7 +14,7 @@ jobs:
         run: |
           HTTP_STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "https://beta.makerdeck.net/api/mastodon-cron")
+            "https://makerdeck.net/api/mastodon-cron")
           cat /tmp/response.txt
           if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
             echo "Request failed with status $HTTP_STATUS"
