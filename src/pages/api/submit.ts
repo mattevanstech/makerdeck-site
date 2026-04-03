@@ -2,7 +2,6 @@ import type { APIRoute } from 'astro';
 import { Client } from '@notionhq/client';
 
 // ── AWS SigV4 helpers — no external packages, uses Web Crypto API ─────────────
-
 async function sha256(data: string | Uint8Array): Promise<ArrayBuffer> {
   const input = typeof data === 'string' ? new TextEncoder().encode(data) : data;
   return crypto.subtle.digest('SHA-256', input);
@@ -37,8 +36,7 @@ async function uploadToR2(
   const ymd      = now.toISOString().slice(0, 10).replace(/-/g, '');
   const datetime = ymd + 'T' + now.toISOString().slice(11, 19).replace(/:/g, '') + 'Z';
 
-  const payloadHash = toHex(await sha256(body));
-
+  const payloadHash     = toHex(await sha256(body));
   const canonicalHeaders =
     `content-type:${contentType}\n` +
     `host:${host}\n` +
@@ -47,23 +45,14 @@ async function uploadToR2(
   const signedHeaders = 'content-type;host;x-amz-content-sha256;x-amz-date';
 
   const canonicalRequest = [
-    'PUT',
-    `/${bucket}/${key}`,
-    '',
-    canonicalHeaders,
-    signedHeaders,
-    payloadHash,
+    'PUT', `/${bucket}/${key}`, '', canonicalHeaders, signedHeaders, payloadHash,
   ].join('\n');
 
   const credentialScope = `${ymd}/${region}/${service}/aws4_request`;
-  const stringToSign = [
-    'AWS4-HMAC-SHA256',
-    datetime,
-    credentialScope,
-    toHex(await sha256(canonicalRequest)),
+  const stringToSign    = [
+    'AWS4-HMAC-SHA256', datetime, credentialScope, toHex(await sha256(canonicalRequest)),
   ].join('\n');
 
-  // Derive signing key
   let signingKey: BufferSource = new TextEncoder().encode(`AWS4${secretAccessKey}`);
   signingKey = await hmacSha256(signingKey, ymd);
   signingKey = await hmacSha256(signingKey, region);
@@ -78,10 +67,10 @@ async function uploadToR2(
   const res = await fetch(url, {
     method: 'PUT',
     headers: {
-      'Authorization':        authorization,
-      'Content-Type':         contentType,
-      'x-amz-content-sha256': payloadHash,
-      'x-amz-date':           datetime,
+      'Authorization':          authorization,
+      'Content-Type':           contentType,
+      'x-amz-content-sha256':   payloadHash,
+      'x-amz-date':             datetime,
     },
     body,
   });
@@ -93,70 +82,63 @@ async function uploadToR2(
 }
 
 // ── API Route ─────────────────────────────────────────────────────────────────
-
 export const POST: APIRoute = async ({ request }) => {
   try {
-    // Accept JSON (not multipart/form-data) so Vercel's CSRF guard doesn't block it
-    const { name, description, modelSource, submitter, fileName, fileType, fileData, website, turnstileToken } =
-      await request.json() as {
-        name: string; description: string; modelSource: string; submitter: string;
-        fileName: string; fileType: string; fileData: string;
-        website?: string; turnstileToken?: string;
-      };
+    const {
+      name, description, modelSource, submitter,
+      fileName, fileType, fileData,
+      mastodonHandle,
+      website, turnstileToken,
+    } = await request.json() as {
+      name: string; description: string; modelSource: string; submitter: string;
+      fileName: string; fileType: string; fileData: string;
+      mastodonHandle?: string;
+      website?: string; turnstileToken?: string;
+    };
 
-    // ── Honeypot check ──────────────────────────────────────────────────────────
-    // Real users never see this field — if it's filled, it's almost certainly a bot.
-    // Return 200 silently so bots don't know they were rejected.
+    // ── Honeypot check ────────────────────────────────────────────────────────
     if (website) {
       return new Response(JSON.stringify({ success: true }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        status: 200, headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    // ── Turnstile verification ──────────────────────────────────────────────────
+    // ── Turnstile verification ────────────────────────────────────────────────
     const turnstileSecret = import.meta.env.TURNSTILE_SECRET_KEY;
     if (turnstileSecret) {
       if (!turnstileToken) {
         return new Response(JSON.stringify({ error: 'Please complete the verification.' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
+          status: 400, headers: { 'Content-Type': 'application/json' },
         });
       }
-      const verifyRes  = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-        method:  'POST',
+      const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ secret: turnstileSecret, response: turnstileToken }),
+        body: JSON.stringify({ secret: turnstileSecret, response: turnstileToken }),
       });
       const verifyData = await verifyRes.json() as { success: boolean };
       if (!verifyData.success) {
         return new Response(JSON.stringify({ error: 'Verification failed. Please try again.' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
+          status: 400, headers: { 'Content-Type': 'application/json' },
         });
       }
     }
 
-    // Validate required fields
     if (!name?.trim() || !submitter?.trim() || !fileData) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
+        status: 400, headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    // Decode base64 photo
     const body = Uint8Array.from(atob(fileData), c => c.charCodeAt(0));
 
-    // Validate file size (4MB max after base64 decode)
     if (body.length > 4 * 1024 * 1024) {
       return new Response(JSON.stringify({ error: 'Photo must be under 4MB' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
+        status: 400, headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    // ── Upload to Cloudflare R2 ─────────────────────────────────────────────
+    // ── Upload to Cloudflare R2 ───────────────────────────────────────────────
     const ext = (fileName ?? 'photo').split('.').pop()?.toLowerCase() ?? 'jpg';
     const key = `show-and-tell/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
 
@@ -165,39 +147,34 @@ export const POST: APIRoute = async ({ request }) => {
       import.meta.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
       import.meta.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
       import.meta.env.CLOUDFLARE_R2_BUCKET_NAME,
-      key,
-      body,
-      fileType || 'image/jpeg',
+      key, body, fileType || 'image/jpeg',
     );
 
     const photoUrl = `${import.meta.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`;
 
-    // ── Create Notion draft ─────────────────────────────────────────────────
+    // ── Create Notion draft ───────────────────────────────────────────────────
     const notion = new Client({ auth: import.meta.env.NOTION_API_KEY });
-
     await notion.pages.create({
       parent: { database_id: import.meta.env.NOTION_SHOW_AND_TELL_DB_ID },
       properties: {
-        'Name':         { title:     [{ text: { content: name } }] },
-        'Description':  { rich_text: [{ text: { content: description } }] },
-        'Photo URL':    { url: photoUrl },
-        'Model Source': { url: modelSource || null },
-        'Submitter':    { rich_text: [{ text: { content: submitter } }] },
-        'Source':       { select: { name: 'Web Form' } },
-        'Approved':     { checkbox: false },
+        'Name':            { title:     [{ text: { content: name } }] },
+        'Description':     { rich_text: [{ text: { content: description } }] },
+        'Photo URL':       { url: photoUrl },
+        'Model Source':    { url: modelSource || null },
+        'Submitter':       { rich_text: [{ text: { content: submitter } }] },
+        'Mastodon Handle': { rich_text: [{ text: { content: mastodonHandle?.trim() || '' } }] },
+        'Source':          { select: { name: 'Web Form' } },
+        'Approved':        { checkbox: false },
       },
     });
 
     return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      status: 200, headers: { 'Content-Type': 'application/json' },
     });
-
   } catch (err) {
     console.error('[/api/submit]', err);
     return new Response(JSON.stringify({ error: 'Submission failed' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      status: 500, headers: { 'Content-Type': 'application/json' },
     });
   }
 };
