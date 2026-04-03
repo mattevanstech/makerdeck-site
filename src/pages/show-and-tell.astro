@@ -81,20 +81,26 @@ function formatDate(iso: string): string {
         </div>
       ) : (
         <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {submissions.map((s: ShowAndTellSubmission) => (
+          {submissions.map((s: ShowAndTellSubmission, idx: number) => (
             <article
               class="gallery-card bg-[#161b22] rounded-xl border border-white/5 overflow-hidden hover:border-purple-500/40 transition-all duration-300 hover:-translate-y-1 flex flex-col group"
+              data-photo={s.photoUrl}
+              data-title={s.name}
+              data-index={idx}
               data-name={s.name.toLowerCase()}
               data-submitter={s.submitter.toLowerCase()}
             >
               <!-- Photo -->
-              <div class="relative aspect-square overflow-hidden bg-gray-900">
+              <div class="relative aspect-square overflow-hidden bg-gray-900 cursor-default lightbox-trigger">
                 <img
                   src={s.photoUrl}
                   alt={s.name}
                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
+                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300 flex items-center justify-center pointer-events-none">
+                  <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/15 backdrop-blur-sm border border-white/30 text-white text-sm font-semibold px-4 py-2 rounded-full">View Photo</span>
+                </div>
               </div>
 
               <!-- Info -->
@@ -126,6 +132,18 @@ function formatDate(iso: string): string {
           ))}
         </div>
       )}
+
+
+      <!-- Load More -->
+      <div id="load-more-container" class="text-center mt-10 hidden">
+        <button
+          id="load-more-btn"
+          class="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-[#161b22] border border-white/10 hover:border-purple-500/40 text-gray-300 hover:text-white font-semibold transition-all duration-200"
+        >
+          <i class="fa-solid fa-chevron-down text-sm"></i> Load More Prints
+        </button>
+        <p id="load-more-count" class="text-gray-600 text-xs mt-3"></p>
+      </div>
 
       <!-- No search results state (hidden by default, shown by JS) -->
       <div id="no-results" class="hidden text-center py-20">
@@ -292,43 +310,110 @@ function formatDate(iso: string): string {
     </div>
   </div>
 
+
+  <!-- ── Lightbox ───────────────────────────────────────────────────────────── -->
+  <div
+    id="lightbox"
+    class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div id="lightbox-backdrop" class="absolute inset-0 bg-black/95"></div>
+    <div class="relative z-10 flex flex-col items-center max-w-5xl w-full">
+      <button
+        id="lightbox-close"
+        class="absolute -top-10 right-0 text-gray-400 hover:text-white transition text-3xl leading-none"
+        aria-label="Close"
+      >
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <img
+        id="lightbox-img"
+        src=""
+        alt=""
+        class="max-h-[80vh] max-w-full rounded-xl shadow-2xl object-contain"
+      />
+      <p id="lightbox-title" class="text-white font-semibold mt-4 text-lg text-center"></p>
+    </div>
+  </div>
+
 </Layout>
 
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <script>
-  // ── Gallery search ───────────────────────────────────────────────────────────────────────
+  const PAGE_SIZE = 13;
+
+  // ── Pagination ───────────────────────────────────────────────────────────────
+  const allCards          = Array.from(document.querySelectorAll<HTMLElement>('.gallery-card'));
+  const loadMoreContainer = document.getElementById('load-more-container');
+  const loadMoreBtn       = document.getElementById('load-more-btn');
+  const loadMoreCount     = document.getElementById('load-more-count');
+  let   shownCount        = 0;
+  let   isSearching       = false;
+
+  function showPage(upTo: number) {
+    allCards.forEach((card, i) => {
+      card.style.display = i < upTo ? '' : 'none';
+    });
+    shownCount = Math.min(upTo, allCards.length);
+    const remaining = allCards.length - shownCount;
+    if (remaining > 0) {
+      loadMoreContainer?.classList.remove('hidden');
+      if (loadMoreCount) {
+        loadMoreCount.textContent = remaining + ' more print' + (remaining !== 1 ? 's' : '') + ' to load';
+      }
+    } else {
+      loadMoreContainer?.classList.add('hidden');
+    }
+  }
+
+  // Initial render
+  showPage(PAGE_SIZE);
+
+  loadMoreBtn?.addEventListener('click', () => {
+    showPage(shownCount + PAGE_SIZE);
+  });
+
+  // ── Gallery search ───────────────────────────────────────────────────────────
   const searchInput = document.getElementById('gallery-search') as HTMLInputElement | null;
-  const cards       = document.querySelectorAll<HTMLElement>('.gallery-card');
   const noResults   = document.getElementById('no-results')!;
   const resultCount = document.getElementById('result-count');
 
   function applySearch() {
     const query = searchInput?.value.trim().toLowerCase() ?? '';
-    let visible = 0;
-    cards.forEach(card => {
-      const show = !query ||
-        card.dataset.name!.includes(query) ||
-        card.dataset.submitter!.includes(query);
-      card.style.display = show ? '' : 'none';
-      if (show) visible++;
-    });
-    noResults?.classList.toggle('hidden', visible > 0);
-    if (resultCount) {
-      resultCount.textContent = query ? `${visible} print${visible !== 1 ? 's' : ''} found` : '';
+    if (query) {
+      isSearching = true;
+      loadMoreContainer?.classList.add('hidden');
+      let visible = 0;
+      allCards.forEach(card => {
+        const match =
+          card.dataset.name!.includes(query) ||
+          card.dataset.submitter!.includes(query);
+        card.style.display = match ? '' : 'none';
+        if (match) visible++;
+      });
+      noResults?.classList.toggle('hidden', visible > 0);
+      if (resultCount) {
+        resultCount.textContent = visible + ' print' + (visible !== 1 ? 's' : '') + ' found';
+      }
+    } else {
+      isSearching = false;
+      noResults?.classList.add('hidden');
+      if (resultCount) resultCount.textContent = '';
+      showPage(shownCount);
     }
   }
 
   searchInput?.addEventListener('input', applySearch);
 
-  // ── Modal open / close ──────────────────────────────────────────────────────────────
+  // ── Modal open / close ────────────────────────────────────────────────────────
   const overlay  = document.getElementById('modal-overlay')!;
   const backdrop = document.getElementById('modal-backdrop')!;
 
   function openModal() {
     overlay.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-    // Reset form state each time modal opens
     document.getElementById('form-success')!.classList.add('hidden');
     document.getElementById('form-error')!.classList.add('hidden');
   }
@@ -341,17 +426,56 @@ function formatDate(iso: string): string {
   document.getElementById('open-modal-btn')?.addEventListener('click', openModal);
   document.getElementById('open-modal-btn-empty')?.addEventListener('click', openModal);
 
-  // Auto-open when landing with ?submit=true (e.g. from navbar "Submit a Print")
   if (new URLSearchParams(window.location.search).get('submit') === 'true') {
     openModal();
-    // Clean up the URL so it doesn't reopen on refresh
     history.replaceState(null, '', window.location.pathname);
   }
   document.getElementById('close-modal-btn')?.addEventListener('click', closeModal);
   backdrop.addEventListener('click', closeModal);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (!document.getElementById('lightbox')!.classList.contains('hidden')) {
+        closeLightbox();
+      } else {
+        closeModal();
+      }
+    }
+  });
 
-  // ── Photo drop zone ──────────────────────────────────────────────────────────────────
+  // ── Lightbox ─────────────────────────────────────────────────────────────────
+  const lightbox         = document.getElementById('lightbox')!;
+  const lightboxImg      = document.getElementById('lightbox-img') as HTMLImageElement;
+  const lightboxTitle    = document.getElementById('lightbox-title')!;
+  const lightboxBackdrop = document.getElementById('lightbox-backdrop')!;
+
+  function openLightbox(photoUrl: string, title: string) {
+    lightboxImg.src = photoUrl;
+    lightboxImg.alt = title;
+    lightboxTitle.textContent = title;
+    lightbox.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lightbox.classList.add('hidden');
+    document.body.style.overflow = '';
+    lightboxImg.src = '';
+  }
+
+  document.getElementById('lightbox-close')?.addEventListener('click', closeLightbox);
+  lightboxBackdrop.addEventListener('click', closeLightbox);
+
+  document.querySelectorAll<HTMLElement>('.lightbox-trigger').forEach(trigger => {
+    trigger.addEventListener('click', () => {
+      const card = trigger.closest<HTMLElement>('.gallery-card');
+      if (!card) return;
+      const photoUrl = card.dataset.photo ?? '';
+      const title    = card.dataset.title ?? '';
+      openLightbox(photoUrl, title);
+    });
+  });
+
+  // ── Photo drop zone ──────────────────────────────────────────────────────────
   const dropZone  = document.getElementById('drop-zone')!;
   const fileInput = document.getElementById('photo-input') as HTMLInputElement;
   const preview   = document.getElementById('photo-preview') as HTMLImageElement;
@@ -375,7 +499,7 @@ function formatDate(iso: string): string {
     if (file) showPreview(file);
   });
 
-  // ── Image compression ─────────────────────────────────────────────────────────────────────
+  // ── Image compression ────────────────────────────────────────────────────────
   function compressImage(file: File): Promise<File> {
     return new Promise((resolve) => {
       const img = new Image();
@@ -424,7 +548,7 @@ function formatDate(iso: string): string {
     fileInput.files = dt.files;
   }
 
-  // ── Form submission ─────────────────────────────────────────────────────────────────────────────
+  // ── Form submission ──────────────────────────────────────────────────────────
   const form     = document.getElementById('submit-form') as HTMLFormElement;
   const btn      = document.getElementById('submit-btn') as HTMLButtonElement;
   const btnText  = document.getElementById('submit-btn-text')!;
@@ -442,7 +566,6 @@ function formatDate(iso: string): string {
       const file = fileInput.files?.[0];
       if (!file) throw new Error('No photo selected');
 
-      // Encode compressed photo as base64 — Vercel blocks multipart/form-data POSTs
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload  = () => resolve((reader.result as string).split(',')[1]);
@@ -450,7 +573,6 @@ function formatDate(iso: string): string {
         reader.readAsDataURL(file);
       });
 
-      // Gather honeypot + Turnstile token
       const honeypot      = (document.getElementById('website') as HTMLInputElement)?.value ?? '';
       const turnstileToken = (document.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement)?.value ?? '';
 
@@ -462,7 +584,7 @@ function formatDate(iso: string): string {
           description:   (document.getElementById('description') as HTMLTextAreaElement).value.trim(),
           modelSource:   (document.getElementById('modelSource') as HTMLInputElement).value.trim(),
           submitter:     (document.getElementById('submitter')   as HTMLInputElement).value.trim(),
-          mastodonHandle: (document.getElementById('mastodonHandle') as HTMLInputElement).value.trim(),
+          mastodonHandle:(document.getElementById('mastodonHandle') as HTMLInputElement)?.value.trim() ?? '',
           fileName:      file.name,
           fileType:      file.type || 'image/jpeg',
           fileData:      base64,
@@ -473,7 +595,6 @@ function formatDate(iso: string): string {
 
       if (!res.ok) throw new Error('Failed');
 
-      // Show success, reset form, auto-close after 2.5s
       success.classList.remove('hidden');
       form.reset();
       preview.classList.add('hidden');
