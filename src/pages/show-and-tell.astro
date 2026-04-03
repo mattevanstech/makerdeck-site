@@ -485,14 +485,12 @@ function formatDate(iso: string): string {
 
   function loadRemembered() {
     try {
-      const _n = document.getElementById('name') as HTMLInputElement;
       const _s = document.getElementById('submitter') as HTMLInputElement;
       const _m = document.getElementById('mastodonHandle') as HTMLInputElement | null;
       const _r = document.getElementById('remember-me') as HTMLInputElement;
       const raw = window['localStorage'].getItem('makerdeck_sat_remember');
       const saved = JSON.parse(raw ?? 'null');
       if (!saved) return;
-      if (_n && saved.name) _n.value = saved.name;
       if (_s && saved.submitter) _s.value = saved.submitter;
       if (_m && saved.mastodon) _m.value = saved.mastodon;
       if (_r) _r.checked = true;
@@ -501,10 +499,11 @@ function formatDate(iso: string): string {
 
   function saveRemembered() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        name:      nameInput?.value.trim() ?? '',
-        submitter: submitterInp?.value.trim() ?? '',
-        mastodon:  mastodonInp?.value.trim() ?? '',
+      const _s = document.getElementById('submitter') as HTMLInputElement;
+      const _m = document.getElementById('mastodonHandle') as HTMLInputElement | null;
+      window['localStorage'].setItem('makerdeck_sat_remember', JSON.stringify({
+        submitter: _s?.value.trim() ?? '',
+        mastodon: _m?.value.trim() ?? '',
       }));
     } catch {}
   }
