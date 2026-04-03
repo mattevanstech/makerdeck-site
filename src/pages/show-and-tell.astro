@@ -241,6 +241,20 @@ function formatDate(iso: string): string {
             />
           </div>
 
+          <!-- Mastodon Handle -->
+          <div>
+            <label for="mastodonHandle" class="block text-sm font-semibold text-gray-300 mb-2">
+              Mastodon Handle <span class="text-gray-500 font-normal">(optional)</span>
+            </label>
+            <input
+              type="text"
+              id="mastodonHandle"
+              name="mastodonHandle"
+              placeholder="@you@mastodon.social"
+              class="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition"
+            />
+          </div>
+
           <!-- Honeypot — hidden from real users, bots tend to fill this in -->
           <div aria-hidden="true" style="position:absolute;opacity:0;top:-9999px;left:-9999px;height:0;overflow:hidden;">
             <label for="website">Website</label>
@@ -448,6 +462,7 @@ function formatDate(iso: string): string {
           description:   (document.getElementById('description') as HTMLTextAreaElement).value.trim(),
           modelSource:   (document.getElementById('modelSource') as HTMLInputElement).value.trim(),
           submitter:     (document.getElementById('submitter')   as HTMLInputElement).value.trim(),
+          mastodonHandle: (document.getElementById('mastodonHandle') as HTMLInputElement).value.trim(),
           fileName:      file.name,
           fileType:      file.type || 'image/jpeg',
           fileData:      base64,
