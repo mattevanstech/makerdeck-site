@@ -88,11 +88,13 @@ export const POST: APIRoute = async ({ request }) => {
       name, description, modelSource, submitter,
       fileName, fileType, fileData,
       mastodonHandle,
+      blueskyHandle,
       website, turnstileToken,
     } = await request.json() as {
       name: string; description: string; modelSource: string; submitter: string;
       fileName: string; fileType: string; fileData: string;
       mastodonHandle?: string;
+      blueskyHandle?: string;
       website?: string; turnstileToken?: string;
     };
 
@@ -163,6 +165,7 @@ export const POST: APIRoute = async ({ request }) => {
         'Model Source':    { url: modelSource || null },
         'Submitter':       { rich_text: [{ text: { content: submitter } }] },
         'Mastodon Handle': { rich_text: [{ text: { content: mastodonHandle?.trim() || '' } }] },
+        'Bluesky Handle':  { rich_text: [{ text: { content: blueskyHandle?.trim() ?? '' } }] },
         'Source':          { select: { name: 'Web Form' } },
         'Approved':        { checkbox: false },
       },
