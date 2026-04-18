@@ -2,197 +2,188 @@ import type { APIRoute } from 'astro';
 import { Client } from '@notionhq/client';
 import type { PageObjectResponse } from '@notionhq/client/build/src/api-endpoints';
 
-// Vercel cron job: polls Notion for approved Show & Tell submissions with
-// "Post to Bluesky" checked that haven't been posted yet, posts each with
-// photo + maker handle (with mention facet), then writes the Bluesky post
-// URI back to Notion.
+const NOTION_TOKEN = import.meta.env.NOTION_TOKEN;
+const NOTION_DATABASE_ID = import.meta.env.NOTION_DATABASE_ID;
+const BLUESKY_IDENTIFIER = import.meta.env.BLUESKY_IDENTIFIER;
+const BLUESKY_APP_PASSWORD = import.meta.env.BLUESKY_APP_PASSWORD;
+const CRON_SECRET = import.meta.env.CRON_SECRET;
 
 export const GET: APIRoute = async ({ request }) => {
-  const cronSecret = import.meta.env.CRON_SECRET;
-  if (cronSecret) {
-    const auth = request.headers.get('authorization');
-    if (auth !== `Bearer ${cronSecret}`) {
-      return new Response('Unauthorized', { status: 401 });
-    }
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader !== `Bearer ${CRON_SECRET}`) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
 
-  const identifier = import.meta.env.BLUESKY_IDENTIFIER;
-  const appPassword = import.meta.env.BLUESKY_APP_PASSWORD;
+  const notion = new Client({ auth: NOTION_TOKEN });
 
-  if (!identifier || !appPassword) {
-    return new Response(JSON.stringify({ error: 'Bluesky env vars not configured' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+  // Authenticate with Bluesky
+  const sessionRes = await fetch('https://bsky.social/xrpc/com.atproto.server.createSession', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifier: BLUESKY_IDENTIFIER, password: BLUESKY_APP_PASSWORD }),
+  });
+  if (!sessionRes.ok) {
+    return new Response(JSON.stringify({ error: 'Bluesky auth failed' }), { status: 500 });
   }
+  const session = await sessionRes.json();
+  const accessJwt = session.accessJwt;
+  const did = session.did;
 
-  try {
-    // ── Authenticate to Bluesky ──────────────────────────────────────────────
-    const sessionRes = await fetch('https://bsky.social/xrpc/com.atproto.server.createSession', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier, password: appPassword }),
-    });
-    if (!sessionRes.ok) {
-      throw new Error(`Bluesky auth failed: ${await sessionRes.text()}`);
-    }
-    const { accessJwt, did } = await sessionRes.json() as { accessJwt: string; did: string };
+  // Query Notion for approved submissions pending Bluesky post
+  const response = await notion.databases.query({
+    database_id: NOTION_DATABASE_ID,
+    filter: {
+      and: [
+        { property: 'Approved', checkbox: { equals: true } },
+        { property: 'Post to Bluesky', checkbox: { equals: true } },
+        { property: 'Bluesky Post URI', rich_text: { is_empty: true } },
+      ],
+    },
+  });
 
-    // ── Query Notion ─────────────────────────────────────────────────────────
-    const notion = new Client({ auth: import.meta.env.NOTION_API_KEY });
-    const queryResponse = await notion.databases.query({
-      database_id: import.meta.env.NOTION_SHOW_AND_TELL_DB_ID,
-      filter: {
-        and: [
-          { property: 'Approved', checkbox: { equals: true } },
-          { property: 'Post to Bluesky', checkbox: { equals: true } },
-          { property: 'Bluesky Post URI', rich_text: { is_empty: true } },
-        ],
-      },
-    });
+  const results = [];
 
-    const results: Array<{
-      pageId: string;
-      name: string;
-      success: boolean;
-      uri?: string;
-      error?: string;
-    }> = [];
+  for (const page of response.results as PageObjectResponse[]) {
+    try {
+      const props = page.properties;
 
-    for (const page of queryResponse.results as PageObjectResponse[]) {
-      try {
-        const props = page.properties;
-        const getText = (prop: string) => {
-          const p = props[prop];
-          if (!p) return '';
-          switch (p.type) {
-            case 'title':    return p.title[0]?.plain_text ?? '';
-            case 'rich_text': return p.rich_text[0]?.plain_text ?? '';
-            case 'url':      return p.url ?? '';
-            default:         return '';
-          }
-        };
+      const name = props['Name']?.type === 'title'
+        ? props['Name'].title[0]?.plain_text ?? '' : '';
+      const submitter = props['Submitter']?.type === 'rich_text'
+        ? props['Submitter'].rich_text[0]?.plain_text ?? '' : '';
+      const description = props['Description']?.type === 'rich_text'
+        ? props['Description'].rich_text[0]?.plain_text ?? '' : '';
+      const shopLink = props['Shop Link']?.type === 'url'
+        ? props['Shop Link'].url ?? '' : '';
+      const blueskyHandle = props['Bluesky Handle']?.type === 'rich_text'
+        ? props['Bluesky Handle'].rich_text[0]?.plain_text ?? '' : '';
 
-        const name        = getText('Name');
-        const description = getText('Description');
-        const photoUrl    = getText('Photo URL');
-        const modelSource = getText('Model Source');
-        const submitter   = getText('Submitter');
-        const rawHandle   = getText('Bluesky Handle');
-        const cleanHandle = rawHandle.trim().replace(/^@/, '');
+      // Get photo
+      const photoFiles = props['Photo']?.type === 'files' ? props['Photo'].files : [];
+      const photoUrl = photoFiles[0]?.type === 'file'
+        ? photoFiles[0].file.url
+        : photoFiles[0]?.type === 'external' ? photoFiles[0].external.url : null;
 
-        // ── Upload photo blob to Bluesky ─────────────────────────────────────
-        let blobRef: unknown | undefined;
-        if (photoUrl) {
-          const photoRes = await fetch(photoUrl);
-          if (photoRes.ok) {
-            const photoBytes  = await photoRes.arrayBuffer();
-            const contentType = photoRes.headers.get('content-type') || 'image/jpeg';
-            const blobRes = await fetch('https://bsky.social/xrpc/com.atproto.repo.uploadBlob', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${accessJwt}`,
-                'Content-Type': contentType,
-              },
-              body: photoBytes,
-            });
-            if (blobRes.ok) {
-              const blobData = await blobRes.json() as { blob: unknown };
-              blobRef = blobData.blob;
-            } else {
-              console.warn('[bluesky-cron] Blob upload failed:', await blobRes.text());
-            }
-          }
+      // Upload image blob
+      let blobRef = null;
+      if (photoUrl) {
+        const imgRes = await fetch(photoUrl);
+        const imgBuffer = await imgRes.arrayBuffer();
+        const contentType = imgRes.headers.get('content-type') ?? 'image/jpeg';
+        const uploadRes = await fetch('https://bsky.social/xrpc/com.atproto.repo.uploadBlob', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessJwt}`, 'Content-Type': contentType },
+          body: imgBuffer,
+        });
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          blobRef = uploadData.blob;
         }
+      }
 
-        // ── Resolve handle to DID for mention facet ──────────────────────────
-        let mentionDid: string | undefined;
-        if (cleanHandle) {
-          const resolveRes = await fetch(
-            `https://bsky.social/xrpc/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(cleanHandle)}`
-          );
-          if (resolveRes.ok) {
-            const resolveData = await resolveRes.json() as { did: string };
-            mentionDid = resolveData.did;
-          }
-        }
+      // Build post text
+      const cleanHandle = blueskyHandle.replace(/^@/, '');
+      let postText = `${name}\n\nMaker: `;
+      postText += cleanHandle ? `@${cleanHandle}\n` : `${submitter}\n`;
+      if (description) postText += `${description} `;
+      if (shopLink) postText += `\ud83d\udd17 ${shopLink}\n`;
+      postText += `#3DPrinting #MakerDeck`;
 
-        // ── Build post text ──────────────────────────────────────────────────
-        const handleDisplay = cleanHandle ? `@${cleanHandle}` : submitter || '';
-        const makerLine  = handleDisplay ? `\n\nMaker: ${handleDisplay}` : '';
-        const modelLine  = modelSource   ? `\n\n🔗 ${modelSource}`        : '';
-        const postText   =
-          name +
-          makerLine +
-          (description ? `\n\n${description}` : '') +
-          modelLine +
-          '\n\n#3DPrinting #MakerDeck';
+      // Build facets
+      const enc = new TextEncoder();
+      const facets: Record<string, unknown>[] = [];
 
-        // ── Build mention facet (byte-accurate offsets) ──────────────────────
-        const facets: unknown[] = [];
-        if (mentionDid && cleanHandle) {
-          const enc       = new TextEncoder();
-          const byteStart = enc.encode(name + '\n\nMaker: ').length;
-          const mentionStr = `@${cleanHandle}`;
-          const byteEnd   = byteStart + enc.encode(mentionStr).length;
+      // Mention facet
+      if (cleanHandle) {
+        const mentionPrefix = `${name}\n\nMaker: `;
+        const byteStart = enc.encode(mentionPrefix).length;
+        const mentionStr = `@${cleanHandle}`;
+        const byteEnd = byteStart + enc.encode(mentionStr).length;
+        const resolveRes = await fetch(
+          `https://bsky.social/xrpc/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(cleanHandle)}`
+        );
+        if (resolveRes.ok) {
+          const resolveData = await resolveRes.json();
           facets.push({
             index: { byteStart, byteEnd },
-            features: [{ $type: 'app.bsky.richtext.facet#mention', did: mentionDid }],
+            features: [{ $type: 'app.bsky.richtext.facet#mention', did: resolveData.did }],
           });
         }
-
-        // ── Create post record ───────────────────────────────────────────────
-        const record: Record<string, unknown> = {
-          $type: 'app.bsky.feed.post',
-          text: postText,
-          createdAt: new Date().toISOString(),
-        };
-        if (blobRef) {
-          record.embed = {
-            $type: 'app.bsky.embed.images',
-            images: [{ image: blobRef, alt: `${name} by ${submitter}` }],
-          };
-        }
-        if (facets.length > 0) record.facets = facets;
-
-        const postRes = await fetch('https://bsky.social/xrpc/com.atproto.repo.createRecord', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessJwt}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ repo: did, collection: 'app.bsky.feed.post', record }),
-        });
-        if (!postRes.ok) {
-          throw new Error(`Bluesky post failed ${postRes.status}: ${await postRes.text()}`);
-        }
-        const { uri } = await postRes.json() as { uri: string };
-
-        // ── Mark as posted in Notion ─────────────────────────────────────────
-        await notion.pages.update({
-          page_id: page.id,
-          properties: {
-            'Bluesky Post URI': { rich_text: [{ text: { content: uri } }] },
-          },
-        });
-
-        results.push({ pageId: page.id, name, success: true, uri });
-      } catch (pageErr) {
-        console.error('[bluesky-cron] Failed for page', page.id, pageErr);
-        results.push({ pageId: page.id, name: '', success: false, error: String(pageErr) });
       }
-    }
 
-    console.log(`[bluesky-cron] Processed ${results.length} submission(s)`);
-    return new Response(JSON.stringify({ processed: results.length, results }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (err) {
-    console.error('[bluesky-cron]', err);
-    return new Response(JSON.stringify({ error: 'Cron job failed', details: String(err) }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+      // URL facets
+      const urlRegex = /https?:\/\/[^\s]+/g;
+      let urlMatch;
+      while ((urlMatch = urlRegex.exec(postText)) !== null) {
+        const byteStart = enc.encode(postText.slice(0, urlMatch.index)).length;
+        const byteEnd = byteStart + enc.encode(urlMatch[0]).length;
+        facets.push({
+          index: { byteStart, byteEnd },
+          features: [{ $type: 'app.bsky.richtext.facet#link', uri: urlMatch[0] }],
+        });
+      }
+
+      // Hashtag facets
+      const tagRegex = /#(\w+)/g;
+      let tagMatch;
+      while ((tagMatch = tagRegex.exec(postText)) !== null) {
+        const byteStart = enc.encode(postText.slice(0, tagMatch.index)).length;
+        const byteEnd = byteStart + enc.encode(tagMatch[0]).length;
+        facets.push({
+          index: { byteStart, byteEnd },
+          features: [{ $type: 'app.bsky.richtext.facet#tag', tag: tagMatch[1] }],
+        });
+      }
+
+      // Build and create record
+      const record: Record<string, unknown> = {
+        $type: 'app.bsky.feed.post',
+        text: postText,
+        createdAt: new Date().toISOString(),
+      };
+      if (blobRef) {
+        record.embed = {
+          $type: 'app.bsky.embed.images',
+          images: [{ image: blobRef, alt: `${name} by ${submitter}` }],
+        };
+      }
+      if (facets.length > 0) record.facets = facets;
+
+      const postRes = await fetch('https://bsky.social/xrpc/com.atproto.repo.createRecord', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessJwt}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ repo: did, collection: 'app.bsky.feed.post', record }),
+      });
+
+      if (!postRes.ok) {
+        const err = await postRes.text();
+        results.push({ name, error: err });
+        continue;
+      }
+
+      const postData = await postRes.json();
+      const postUri = postData.uri;
+
+      // Mark as posted in Notion
+      await notion.pages.update({
+        page_id: page.id,
+        properties: {
+          'Bluesky Post URI': { rich_text: [{ text: { content: postUri } }] },
+        },
+      });
+
+      results.push({ name, uri: postUri });
+    } catch (err) {
+      results.push({ name: 'unknown', error: String(err) });
+    }
   }
+
+  console.log(`[bluesky-cron] Processed ${results.length} submission(s):`, JSON.stringify(results));
+  return new Response(JSON.stringify({ processed: results.length, results }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
 };
