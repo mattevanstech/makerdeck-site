@@ -273,6 +273,20 @@ function formatDate(iso: string): string {
             />
           </div>
 
+          <!-- Bluesky Handle -->
+          <div>
+            <label for="blueskyHandle" class="block text-sm font-semibold text-gray-300 mb-2">
+              Bluesky Handle <span class="text-gray-500 font-normal">(optional)</span>
+            </label>
+            <input
+              type="text"
+              id="blueskyHandle"
+              name="blueskyHandle"
+              placeholder="@you.bsky.social"
+              class="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition"
+            />
+          </div>
+
 
           <!-- Remember Me -->
           <div class="flex items-center gap-3 pt-1">
@@ -487,12 +501,14 @@ function formatDate(iso: string): string {
     try {
       const _s = document.getElementById('submitter') as HTMLInputElement;
       const _m = document.getElementById('mastodonHandle') as HTMLInputElement | null;
+      const _b = document.getElementById('blueskyHandle') as HTMLInputElement | null;
       const _r = document.getElementById('remember-me') as HTMLInputElement;
       const raw = window['localStorage'].getItem('makerdeck_sat_remember');
       const saved = JSON.parse(raw ?? 'null');
       if (!saved) return;
       if (_s && saved.submitter) _s.value = saved.submitter;
-      if (_m && saved.mastodon) _m.value = saved.mastodon;
+      if (_m && saved.mastodon)  _m.value = saved.mastodon;
+      if (_b && saved.bluesky)   _b.value = saved.bluesky;
       if (_r) _r.checked = true;
     } catch {}
   }
@@ -501,9 +517,11 @@ function formatDate(iso: string): string {
     try {
       const _s = document.getElementById('submitter') as HTMLInputElement;
       const _m = document.getElementById('mastodonHandle') as HTMLInputElement | null;
+      const _b = document.getElementById('blueskyHandle') as HTMLInputElement | null;
       window['localStorage'].setItem('makerdeck_sat_remember', JSON.stringify({
         submitter: _s?.value.trim() ?? '',
         mastodon: _m?.value.trim() ?? '',
+        bluesky: _b?.value.trim() ?? '',
       }));
     } catch {}
   }
@@ -660,6 +678,7 @@ function formatDate(iso: string): string {
           modelSource:   (document.getElementById('modelSource') as HTMLInputElement).value.trim(),
           submitter:     (document.getElementById('submitter')   as HTMLInputElement).value.trim(),
           mastodonHandle:(document.getElementById('mastodonHandle') as HTMLInputElement)?.value.trim() ?? '',
+              blueskyHandle:(document.getElementById('blueskyHandle') as HTMLInputElement)?.value.trim() ?? '',
           fileName:      file.name,
           fileType:      file.type || 'image/jpeg',
           fileData:      base64,
