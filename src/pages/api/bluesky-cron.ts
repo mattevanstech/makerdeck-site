@@ -79,7 +79,7 @@ export const GET: APIRoute = async ({ request }) => {
         const modelSource = getText('Model Source');
         const submitter = getText('Submitter');
         const rawHandle = getText('Bluesky Handle');
-        const cleanHandle = rawHandle.trim().replace(/^@/, '');
+        const cleanHandle = rawHandle.trim().replace(/^@+/, '').split('@')[0];
 
         // ── Upload photo blob to Bluesky ─────────────────────────────────────
         let blobRef: unknown | undefined;
@@ -121,10 +121,15 @@ export const GET: APIRoute = async ({ request }) => {
         const handleDisplay = cleanHandle ? `@${cleanHandle}` : submitter || '';
         const makerLine = handleDisplay ? `\n\nMaker: ${handleDisplay}` : '';
         const modelLine = modelSource ? `\n\n🔗 ${modelSource}` : '';
+        const frameLen = (name + makerLine + modelLine + '\n\n#3DPrinting #MakerDeck').length;
+        const maxDescLen = 295 - frameLen - 2;
+        const trimDesc = description && maxDescLen > 10 && description.length > maxDescLen
+          ? description.substring(0, maxDescLen - 1) + '\u2026'
+          : description || '';
         const postText =
           name +
           makerLine +
-          (description ? `\n\n${description}` : '') +
+          (trimDesc ? `\n\n${trimDesc}` : '') +
           modelLine +
           '\n\n#3DPrinting #MakerDeck';
 
