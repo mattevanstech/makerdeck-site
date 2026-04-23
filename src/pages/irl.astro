@@ -52,7 +52,12 @@ const eventDay = nextEvent.toLocaleDateString('en-US', { day: 'numeric', timeZon
             alt="MakerDeck IRL Mixer at Formula Brewing"
             class="w-full h-full object-cover object-[center_15%] opacity-60"
           />
+          <!-- Top/bottom fade -->
           <div class="absolute inset-0 bg-gradient-to-b from-[#0d1117]/50 via-[#0d1117]/20 to-[#0d1117]/70"></div>
+          <!-- Left fade -->
+          <div class="absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-[#0d1117] to-transparent"></div>
+          <!-- Right fade -->
+          <div class="absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-[#0d1117] to-transparent"></div>
         </div>
         <!-- Content -->
         <div class="relative max-w-3xl mx-auto">
