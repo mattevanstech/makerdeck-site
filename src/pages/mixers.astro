@@ -86,12 +86,12 @@ const eventDay = nextEvent.toLocaleDateString('en-US', { day: 'numeric', timeZon
     <!-- Next Event Details -->
     <section class="max-w-4xl mx-auto px-4 pt-12 pb-6">
       <p class="text-xs font-semibold uppercase tracking-widest text-[#8b949e] mb-5">Next Event</p>
-      <div class="grid sm:grid-cols-3 gap-4">
+      <div class="grid grid-cols-3 gap-4">
 
         <div class="bg-[#161b22] border border-white/10 rounded-xl p-6 flex items-start gap-4">
           <div class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-            <i class="fa-solid fa-calendar-days text-purple-400 text-lg w-4 text-center"></i>
-          </div
+            <i class="fa-solid fa-calendar-days text-purple-400 text-lg"></i>
+          </div>
           <div>
             <p class="text-xs text-[#8b949e] uppercase tracking-wide mb-1">Date</p>
             <p class="text-white font-semibold leading-snug">{eventDateLong}</p>
@@ -101,8 +101,8 @@ const eventDay = nextEvent.toLocaleDateString('en-US', { day: 'numeric', timeZon
 
         <div class="bg-[#161b22] border border-white/10 rounded-xl p-6 flex items-start gap-4">
           <div class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-            <i class="fa-solid fa-clock text-purple-400 text-lg w-4 text-center"></i>
-          </div
+            <i class="fa-solid fa-clock text-purple-400 text-lg"></i>
+          </div>
           <div>
             <p class="text-xs text-[#8b949e] uppercase tracking-wide mb-1">Time</p>
             <p class="text-white font-semibold">6:00 PM &ndash; 8:00 PM</p>
@@ -112,16 +112,11 @@ const eventDay = nextEvent.toLocaleDateString('en-US', { day: 'numeric', timeZon
 
         <div class="bg-[#161b22] border border-white/10 rounded-xl p-6 flex items-start gap-4">
           <div class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-            <i class="fa-solid fa-location-dot text-purple-400 text-lg w-4 text-center"></i>
-          </div
+            <i class="fa-solid fa-location-dot text-purple-400 text-lg"></i>
+          </div>
           <div>
             <p class="text-xs text-[#8b949e] uppercase tracking-wide mb-1">Location</p>
-            <a
-              href="https://maps.google.com/?q=Formula+Brewing+Issaquah+WA"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-white font-semibold hover:text-otext-purple-400ition-colors"
-            >Formula Brewing</a>
+            <a href="https://maps.google.com/?q=Formula+Brewing+Issaquah+WA" target="_blank" rel="noopener noreferrer" class="text-white font-semibold hover:text-purple-400 transition-colors">Formula Brewing</a>
             <p class="text-sm text-[#8b949e] mt-1">Issaquah, Washington</p>
           </div>
         </div>
@@ -129,7 +124,7 @@ const eventDay = nextEvent.toLocaleDateString('en-US', { day: 'numeric', timeZon
       </div>
     </section>
 
-    <!-- About -->
+        <!-- About -->
     <section class="max-w-4xl mx-auto px-4 py-6">
       <div class="bg-[#161b22] border border-white/10 rounded-xl p-8">
         <h2 class="text-xl font-bold text-white mb-4">About the Mixer</h2>
