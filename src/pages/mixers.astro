@@ -11,12 +11,11 @@ function getNextThirdMonday(): Date {
     const dayOfWeek = d.getDay(); // 0=Sun, 1=Mon
     const daysUntilMonday = dayOfWeek === 1 ? 0 : (8 - dayOfWeek) % 7;
     const firstMonday = 1 + daysUntilMonday;
-    return new Date(year, month, firstMonday + 14);
+    return new Date(Date.UTC(year, month, firstMonday + 14, 12, 0, 0));
   }
 
   const tm = thirdMonday(now.getFullYear(), now.getMonth());
-  const eventEnd = new Date(tm);
-  eventEnd.setHours(20, 0, 0, 0);
+  const eventEnd = new Date(Date.UTC(tm.getUTCFullYear(), tm.getUTCMonth(), tm.getUTCDate(), 20, 0, 0));
 
   if (now > eventEnd) {
     const nm = now.getMonth() === 11 ? 0 : now.getMonth() + 1;
