@@ -113,15 +113,13 @@ function formatDate(iso: string): string {
                 {s.description && (
                   <div class="flex-grow mb-3">
                     <p class="text-gray-400 text-sm line-clamp-2">{s.description}</p>
-                    {s.description.length > 120 && (
-                      <button class="text-purple-400 text-xs hover:text-purple-300 mt-0.5" onclick="event.stopPropagation();const c=this.closest('.gallery-card');openLightbox(c.dataset.photo||'',c.dataset.title||'',c.dataset.description||'',c.dataset.mastodon||'',c.dataset.bluesky||'',c.dataset.threads||'')">more &rsaquo;</button>
-                    )}
+                    <button class="text-purple-400 text-xs hover:text-purple-300 mt-0.5" data-more-btn>more &rsaquo;</button>
                   </div>
                 )}
                 <div class="mt-auto pt-3 border-t border-white/5 flex items-center justify-between gap-2">
                   <span class="text-gray-500 text-xs flex items-center gap-1">
                     <i class="fa-solid fa-user text-gray-600"></i>
-                      <button class="hover:text-purple-400 transition-colors" onclick="event.stopPropagation();const si=document.getElementById('gallery-search');if(si){si.value=this.closest('.gallery-card').dataset.submitter||'';si.dispatchEvent(new Event('input'));si.scrollIntoView({behavior:'smooth'})}">{s.submitter}</button>
+                      <button class="hover:text-purple-400 transition-colors" data-search-btn>{s.submitter}</button>
                   </span>
                   {(s.blueskyHandle || s.mastodonHandle || s.threadsHandle) && (
                     <div class="flex items-center gap-3 mt-1.5">
@@ -609,6 +607,29 @@ function formatDate(iso: string): string {
   }
 
   document.getElementById('lightbox-close')?.addEventListener('click', closeLightbox);
+
+  // Delegated listener for "more" buttons on cards
+  document.addEventListener('click', (e) => {
+    const moreBtn = (e.target as Element).closest('[data-more-btn]');
+    if (moreBtn) {
+      e.stopPropagation();
+      const c = moreBtn.closest('.gallery-card') as HTMLElement | null;
+      if (!c) return;
+      openLightbox(c.dataset.photo||'', c.dataset.title||'', c.dataset.description||'', c.dataset.mastodon||'', c.dataset.bluesky||'', c.dataset.threads||'');
+    }
+    const searchBtn = (e.target as Element).closest('[data-search-btn]');
+    if (searchBtn) {
+      e.stopPropagation();
+      const c = searchBtn.closest('.gallery-card') as HTMLElement | null;
+      const si = document.getElementById('gallery-search') as HTMLInputElement | null;
+      if (si && c) {
+        si.value = c.dataset.submitter || '';
+        si.dispatchEvent(new Event('input'));
+        requestAnimationFrame(() => history.replaceState(null, '', location.pathname + location.search));
+        si.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, true); // use capture to fire before card click
   lightboxBackdrop.addEventListener('click', closeLightbox);
 
   document.querySelectorAll<HTMLElement>('.lightbox-trigger').forEach(trigger => {
