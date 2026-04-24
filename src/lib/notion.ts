@@ -139,5 +139,8 @@ export async function getShowAndTellSubmissions(): Promise<ShowAndTellSubmission
     submitter:   getText(page, 'Submitter'),
     source:      getText(page, 'Source'),
     submitted:   (page.properties['Submitted'] as any)?.created_time ?? '',
+    mastodonHandle: getText(page, 'Mastodon Handle'),
+    blueskyHandle:  getText(page, 'Bluesky Handle'),
+    threadsHandle:  getText(page, 'Threads Handle'),
   }));
 }
