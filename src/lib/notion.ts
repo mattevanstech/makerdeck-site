@@ -119,6 +119,9 @@ export interface ShowAndTellSubmission {
   submitter: string;
   source: string;
   submitted: string;
+  mastodonHandle: string;
+  blueskyHandle: string;
+  threadsHandle: string;
 }
 
 export async function getShowAndTellSubmissions(): Promise<ShowAndTellSubmission[]> {
