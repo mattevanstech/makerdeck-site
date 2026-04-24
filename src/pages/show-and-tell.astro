@@ -113,13 +113,13 @@ function formatDate(iso: string): string {
                 {s.description && (
                   <div class="flex-grow mb-3">
                     <p class="text-gray-400 text-sm line-clamp-2">{s.description}</p>
-                    <button class="text-purple-400 text-xs hover:text-purple-300 mt-0.5" data-more-btn>more &rsaquo;</button>
+                    <button type="button" class="text-purple-400 text-xs hover:text-purple-300 mt-0.5" data-more-btn>more &rsaquo;</button>
                   </div>
                 )}
                 <div class="mt-auto pt-3 border-t border-white/5 flex items-center justify-between gap-2">
                   <span class="text-gray-500 text-xs flex items-center gap-1">
                     <i class="fa-solid fa-user text-gray-600"></i>
-                      <button class="hover:text-purple-400 transition-colors" data-search-btn>{s.submitter}</button>
+                      <button type="button" class="hover:text-purple-400 transition-colors" data-search-btn>{s.submitter}</button>
                   </span>
                   {(s.blueskyHandle || s.mastodonHandle || s.threadsHandle) && (
                     <div class="flex items-center gap-3 mt-1.5">
