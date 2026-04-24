@@ -11,12 +11,11 @@ function getNextThirdMonday(): Date {
     const dayOfWeek = d.getDay(); // 0=Sun, 1=Mon
     const daysUntilMonday = dayOfWeek === 1 ? 0 : (8 - dayOfWeek) % 7;
     const firstMonday = 1 + daysUntilMonday;
-    return new Date(year, month, firstMonday + 14);
+    return new Date(Date.UTC(year, month, firstMonday + 14, 12, 0, 0));
   }
 
   const tm = thirdMonday(now.getFullYear(), now.getMonth());
-  const eventEnd = new Date(tm);
-  eventEnd.setHours(20, 0, 0, 0);
+  const eventEnd = new Date(Date.UTC(tm.getUTCFullYear(), tm.getUTCMonth(), tm.getUTCDate(), 20, 0, 0));
 
   if (now > eventEnd) {
     const nm = now.getMonth() === 11 ? 0 : now.getMonth() + 1;
@@ -36,7 +35,7 @@ const eventDay = nextEvent.toLocaleDateString('en-US', { day: 'numeric', timeZon
 ---
 
 <Layout
-  title="IRL Mixer — MakerDeck Issaquah Meetup"
+  title="IRL Mixers — MakerDeck Issaquah Meetup"
   description="A monthly meetup for makers, techies, and geeks at Formula Brewing in Issaquah. Every 3rd Monday of the month, 6–8 PM."
 >
   <Navbar />
@@ -49,7 +48,7 @@ const eventDay = nextEvent.toLocaleDateString('en-US', { day: 'numeric', timeZon
         <div class="absolute inset-0">
           <img
             src="/img/irl/mixer-1.jpg"
-            alt="MakerDeck IRL Mixer at Formula Brewing"
+            alt="MakerDeck IRL Mixers at Formula Brewing"
             class="w-full h-full object-cover object-[center_15%] opacity-30"
           />
           <!-- Top/bottom fade -->
@@ -65,7 +64,7 @@ const eventDay = nextEvent.toLocaleDateString('en-US', { day: 'numeric', timeZon
             Monthly Meetup &middot; Issaquah, WA
           </div>
           <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-4 tracking-tight">
-            MakerDeck <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">IRL Mixer</span>
+            MakerDeck <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">IRL Mixers</span>
           </h1>
           <p class="text-gray-300 text-lg md:text-xl max-w-xl mx-auto mb-8">
             Makers, Techies &amp; Geeks &mdash; every 3rd Monday at Formula Brewing, Issaquah
@@ -86,7 +85,7 @@ const eventDay = nextEvent.toLocaleDateString('en-US', { day: 'numeric', timeZon
     <!-- Next Event Details -->
     <section class="max-w-4xl mx-auto px-4 pt-12 pb-6">
       <p class="text-xs font-semibold uppercase tracking-widest text-[#8b949e] mb-5">Next Event</p>
-      <div class="grid grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
         <div class="bg-[#161b22] border border-white/10 rounded-xl p-6 flex items-start gap-4">
           <div class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
@@ -142,7 +141,69 @@ const eventDay = nextEvent.toLocaleDateString('en-US', { day: 'numeric', timeZon
       </div>
     </section>
 
-    <!-- Good to Know -->
+    <!-- Your Hosts -->
+    <section class="max-w-4xl mx-auto px-4 py-6">
+      <p class="text-xs font-semibold uppercase tracking-widest text-[#8b949e] mb-5">Your Hosts</p>
+      <div class="grid sm:grid-cols-2 gap-5">
+
+        <!-- Matt Evans -->
+        <div class="bg-[#161b22] border border-white/10 rounded-xl p-6 flex items-center gap-5">
+          <img
+            src="/img/irl/mattevans.avif"
+            alt="Matt Evans"
+            class="w-20 h-20 rounded-full object-cover flex-shrink-0 ring-2 ring-purple-500/40"
+          />
+          <div>
+            <h3 class="text-white font-bold text-lg">Matt Evans</h3>
+            <p class="text-[#8b949e] text-sm mb-3">Co-host &amp; content creator</p>
+            <div class="flex items-center gap-4">
+              <a href="https://instagram.com/mattevanstech" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="text-[#8b949e] hover:text-white transition-colors">
+                <i class="fa-brands fa-instagram text-lg"></i>
+              </a>
+              <a href="https://threads.com/mattevanstech" target="_blank" rel="noopener noreferrer" aria-label="Threads" class="text-[#8b949e] hover:text-white transition-colors">
+                <i class="fa-brands fa-threads text-lg"></i>
+              </a>
+              <a href="https://x.com/mattevanstech" target="_blank" rel="noopener noreferrer" aria-label="X" class="text-[#8b949e] hover:text-white transition-colors">
+                <i class="fa-brands fa-x-twitter text-lg"></i>
+              </a>
+              <a href="https://bsky.app/profile/mattevanstech" target="_blank" rel="noopener noreferrer" aria-label="Bluesky" class="text-[#8b949e] hover:text-white transition-colors">
+                <i class="fa-brands fa-bluesky text-lg"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chris Pirillo -->
+        <div class="bg-[#161b22] border border-white/10 rounded-xl p-6 flex items-center gap-5">
+          <img
+            src="/img/irl/chrispirillo.avif"
+            alt="Chris Pirillo"
+            class="w-20 h-20 rounded-full object-cover flex-shrink-0 ring-2 ring-purple-500/40"
+          />
+          <div>
+            <h3 class="text-white font-bold text-lg">Chris Pirillo</h3>
+            <p class="text-[#8b949e] text-sm mb-3">Co-host &amp; MakerDeck founder</p>
+            <div class="flex items-center gap-4">
+              <a href="https://instagram.com/chrispirillo" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="text-[#8b949e] hover:text-white transition-colors">
+                <i class="fa-brands fa-instagram text-lg"></i>
+              </a>
+              <a href="https://threads.com/chrispirillo" target="_blank" rel="noopener noreferrer" aria-label="Threads" class="text-[#8b949e] hover:text-white transition-colors">
+                <i class="fa-brands fa-threads text-lg"></i>
+              </a>
+              <a href="https://x.com/chrispirillo" target="_blank" rel="noopener noreferrer" aria-label="X" class="text-[#8b949e] hover:text-white transition-colors">
+                <i class="fa-brands fa-x-twitter text-lg"></i>
+              </a>
+              <a href="https://bsky.app/profile/chrispirillo.bsky.social" target="_blank" rel="noopener noreferrer" aria-label="Bluesky" class="text-[#8b949e] hover:text-white transition-colors">
+                <i class="fa-brands fa-bluesky text-lg"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+        <!-- Good to Know -->
     <section class="max-w-4xl mx-auto px-4 py-6 pb-16">
       <p class="text-xs font-semibold uppercase tracking-widest text-[#8b949e] mb-5">Good to Know</p>
       <div class="grid sm:grid-cols-2 gap-4">
@@ -201,11 +262,11 @@ const eventDay = nextEvent.toLocaleDateString('en-US', { day: 'numeric', timeZon
     <section class="max-w-4xl mx-auto px-4 py-6 pb-16">
       <p class="text-xs font-semibold uppercase tracking-widest text-[#8b949e] mb-5">From Past Mixers</p>
       <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <img src="/img/irl/mixer-1.jpg" alt="MakerDeck IRL Mixer" class="rounded-xl object-cover w-full aspect-square hover:opacity-90 transition-opacity" />
-        <img src="/img/irl/mixer-2.jpeg" alt="MakerDeck IRL Mixer" class="rounded-xl object-cover w-full aspect-square hover:opacity-90 transition-opacity" />
-        <img src="/img/irl/mixer-3.jpg" alt="MakerDeck IRL Mixer at Formula Brewing" class="rounded-xl object-cover w-full aspect-square hover:opacity-90 transition-opacity" />
-        <img src="/img/irl/mixer-4.jpeg" alt="MakerDeck IRL Mixer" class="rounded-xl object-cover w-full aspect-square hover:opacity-90 transition-opacity" />
-        <img src="/img/irl/mixer-5.jpeg" alt="MakerDeck IRL Mixer" class="rounded-xl object-cover w-full aspect-square hover:opacity-90 transition-opacity" />
+        <img src="/img/irl/mixer-1.jpg" alt="MakerDeck IRL Mixers" class="rounded-xl object-cover w-full aspect-square hover:opacity-90 transition-opacity" />
+        <img src="/img/irl/mixer-2.jpeg" alt="MakerDeck IRL Mixers" class="rounded-xl object-cover w-full aspect-square hover:opacity-90 transition-opacity" />
+        <img src="/img/irl/mixer-3.jpg" alt="MakerDeck IRL Mixers at Formula Brewing" class="rounded-xl object-cover w-full aspect-square hover:opacity-90 transition-opacity" />
+        <img src="/img/irl/mixer-4.jpeg" alt="MakerDeck IRL Mixers" class="rounded-xl object-cover w-full aspect-square hover:opacity-90 transition-opacity" />
+        <img src="/img/irl/mixer-5.jpeg" alt="MakerDeck IRL Mixers" class="rounded-xl object-cover w-full aspect-square hover:opacity-90 transition-opacity" />
       </div>
     </section>
 
