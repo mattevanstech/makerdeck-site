@@ -1,0 +1,20 @@
+name: Threads Cron
+on:
+  schedule:
+    # Runs every 15 minutes — checks for submissions approved for Threads
+    - cron: '*/15 * * * *'
+  workflow_dispatch: {}
+jobs:
+  post-to-threads:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call threads-cron endpoint
+        run: |
+          HTTP_STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://makerdeck.net/api/threads-cron")
+          cat /tmp/response.txt
+          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
+            echo "Request failed with status $HTTP_STATUS"
+            exit 1
+          fi
