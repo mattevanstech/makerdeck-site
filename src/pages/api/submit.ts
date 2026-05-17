@@ -36,7 +36,7 @@ async function uploadToR2(
   const ymd      = now.toISOString().slice(0, 10).replace(/-/g, '');
   const datetime = ymd + 'T' + now.toISOString().slice(11, 19).replace(/:/g, '') + 'Z';
 
-  const payloadHash     = toHex(await sha256(body));
+  const payloadHash      = toHex(await sha256(body));
   const canonicalHeaders =
     `content-type:${contentType}\n` +
     `host:${host}\n` +
@@ -59,7 +59,7 @@ async function uploadToR2(
   signingKey = await hmacSha256(signingKey, service);
   signingKey = await hmacSha256(signingKey, 'aws4_request');
 
-  const signature    = toHex(await hmacSha256(signingKey, stringToSign));
+  const signature     = toHex(await hmacSha256(signingKey, stringToSign));
   const authorization =
     `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, ` +
     `SignedHeaders=${signedHeaders}, Signature=${signature}`;
@@ -67,10 +67,10 @@ async function uploadToR2(
   const res = await fetch(url, {
     method: 'PUT',
     headers: {
-      'Authorization':          authorization,
-      'Content-Type':           contentType,
-      'x-amz-content-sha256':   payloadHash,
-      'x-amz-date':             datetime,
+      'Authorization':        authorization,
+      'Content-Type':         contentType,
+      'x-amz-content-sha256': payloadHash,
+      'x-amz-date':           datetime,
     },
     body,
   });
@@ -81,22 +81,84 @@ async function uploadToR2(
   }
 }
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+interface PrintPayload {
+  name: string;
+  description: string;
+  modelSource: string;
+  fileName: string;
+  fileType: string;
+  fileData: string;
+}
+
+interface BatchRequest {
+  submitter: string;
+  mastodonHandle?: string;
+  blueskyHandle?: string;
+  website?: string;
+  turnstileToken?: string;
+  /** Batch mode: array of prints */
+  prints: PrintPayload[];
+}
+
+// ── Single-print upload + Notion entry ───────────────────────────────────────
+async function processPrint(
+  print: PrintPayload,
+  submitter: string,
+  mastodonHandle: string,
+  blueskyHandle: string,
+): Promise<void> {
+  const body = Uint8Array.from(atob(print.fileData), c => c.charCodeAt(0));
+
+  if (body.length > 4 * 1024 * 1024) {
+    throw new Error('Photo must be under 4 MB');
+  }
+
+  const ext = (print.fileName ?? 'photo').split('.').pop()?.toLowerCase() ?? 'jpg';
+  const key = `show-and-tell/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+
+  await uploadToR2(
+    import.meta.env.CLOUDFLARE_R2_ACCOUNT_ID,
+    import.meta.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
+    import.meta.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
+    import.meta.env.CLOUDFLARE_R2_BUCKET_NAME,
+    key,
+    body,
+    print.fileType || 'image/jpeg',
+  );
+
+  const photoUrl = `${import.meta.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`;
+
+  const notion = new Client({ auth: import.meta.env.NOTION_API_KEY });
+  await notion.pages.create({
+    parent: { database_id: import.meta.env.NOTION_SHOW_AND_TELL_DB_ID },
+    properties: {
+      'Name':            { title:     [{ text: { content: print.name } }] },
+      'Description':     { rich_text: [{ text: { content: print.description ?? '' } }] },
+      'Photo URL':       { url: photoUrl },
+      'Model Source':    { url: print.modelSource || null },
+      'Submitter':       { rich_text: [{ text: { content: submitter } }] },
+      'Mastodon Handle': { rich_text: [{ text: { content: mastodonHandle ?? '' } }] },
+      'Bluesky Handle':  { rich_text: [{ text: { content: blueskyHandle ?? '' } }] },
+      'Source':          { select: { name: 'Web Form' } },
+      'Approved':        { checkbox: false },
+    },
+  });
+}
+
 // ── API Route ─────────────────────────────────────────────────────────────────
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const body = await request.json() as BatchRequest;
+
     const {
-      name, description, modelSource, submitter,
-      fileName, fileType, fileData,
-      mastodonHandle,
-      blueskyHandle,
-      website, turnstileToken,
-    } = await request.json() as {
-      name: string; description: string; modelSource: string; submitter: string;
-      fileName: string; fileType: string; fileData: string;
-      mastodonHandle?: string;
-      blueskyHandle?: string;
-      website?: string; turnstileToken?: string;
-    };
+      submitter,
+      mastodonHandle = '',
+      blueskyHandle  = '',
+      website        = '',
+      turnstileToken = '',
+      prints         = [],
+    } = body;
 
     // ── Honeypot check ────────────────────────────────────────────────────────
     if (website) {
@@ -126,54 +188,61 @@ export const POST: APIRoute = async ({ request }) => {
       }
     }
 
-    if (!name?.trim() || !submitter?.trim() || !fileData) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+    // ── Validate ──────────────────────────────────────────────────────────────
+    if (!submitter?.trim()) {
+      return new Response(JSON.stringify({ error: 'Name / Discord handle is required.' }), {
         status: 400, headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    const body = Uint8Array.from(atob(fileData), c => c.charCodeAt(0));
-
-    if (body.length > 4 * 1024 * 1024) {
-      return new Response(JSON.stringify({ error: 'Photo must be under 4MB' }), {
+    if (!prints.length) {
+      return new Response(JSON.stringify({ error: 'No prints to submit.' }), {
         status: 400, headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    // ── Upload to Cloudflare R2 ───────────────────────────────────────────────
-    const ext = (fileName ?? 'photo').split('.').pop()?.toLowerCase() ?? 'jpg';
-    const key = `show-and-tell/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+    for (const p of prints) {
+      if (!p.name?.trim()) {
+        return new Response(JSON.stringify({ error: 'Each print must have a name.' }), {
+          status: 400, headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (!p.fileData) {
+        return new Response(JSON.stringify({ error: 'Missing photo data for one or more prints.' }), {
+          status: 400, headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
-    await uploadToR2(
-      import.meta.env.CLOUDFLARE_R2_ACCOUNT_ID,
-      import.meta.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
-      import.meta.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
-      import.meta.env.CLOUDFLARE_R2_BUCKET_NAME,
-      key, body, fileType || 'image/jpeg',
-    );
+    // ── Process each print ────────────────────────────────────────────────────
+    const errors: string[] = [];
+    let successCount = 0;
 
-    const photoUrl = `${import.meta.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`;
+    for (const print of prints) {
+      try {
+        await processPrint(print, submitter.trim(), mastodonHandle.trim(), blueskyHandle.trim());
+        successCount++;
+      } catch (err) {
+        console.error('[/api/submit] print failed:', err);
+        errors.push(print.name ?? 'Unknown');
+      }
+    }
 
-    // ── Create Notion draft ───────────────────────────────────────────────────
-    const notion = new Client({ auth: import.meta.env.NOTION_API_KEY });
-    await notion.pages.create({
-      parent: { database_id: import.meta.env.NOTION_SHOW_AND_TELL_DB_ID },
-      properties: {
-        'Name':            { title:     [{ text: { content: name } }] },
-        'Description':     { rich_text: [{ text: { content: description } }] },
-        'Photo URL':       { url: photoUrl },
-        'Model Source':    { url: modelSource || null },
-        'Submitter':       { rich_text: [{ text: { content: submitter } }] },
-        'Mastodon Handle': { rich_text: [{ text: { content: mastodonHandle?.trim() || '' } }] },
-        'Bluesky Handle':  { rich_text: [{ text: { content: blueskyHandle?.trim() ?? '' } }] },
-        'Source':          { select: { name: 'Web Form' } },
-        'Approved':        { checkbox: false },
-      },
-    });
+    if (successCount === 0) {
+      return new Response(JSON.stringify({ error: 'All submissions failed. Please try again.' }), {
+        status: 500, headers: { 'Content-Type': 'application/json' },
+      });
+    }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({
+      success: true,
+      submitted: successCount,
+      failed: errors.length,
+      failedNames: errors,
+    }), {
       status: 200, headers: { 'Content-Type': 'application/json' },
     });
+
   } catch (err) {
     console.error('[/api/submit]', err);
     return new Response(JSON.stringify({ error: 'Submission failed' }), {

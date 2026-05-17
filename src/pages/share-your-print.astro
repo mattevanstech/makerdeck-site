@@ -1,0 +1,717 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
+---
+
+<Layout
+  title="Share Your Print — MakerDeck"
+  description="Submit your 3D prints to the MakerDeck community Show & Tell gallery."
+>
+  <Navbar />
+
+  <!-- Hero -->
+  <section class="bg-[#0d1117] border-b border-gray-800 py-14 px-6 text-center">
+    <div class="max-w-2xl mx-auto">
+      <a
+        href="/show-and-tell"
+        class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-300 transition text-sm mb-6"
+      >
+        <i class="fa-solid fa-arrow-left text-xs"></i> Back to Gallery
+      </a>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm font-semibold mb-5 tracking-wide uppercase">
+        <i class="fa-solid fa-upload text-xs"></i> Community Gallery
+      </div>
+      <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
+        Share Your <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Prints</span>
+      </h1>
+      <p class="text-gray-400 text-lg">
+        Upload one or more photos, fill in the details, and submit. All entries are reviewed before going live.
+      </p>
+    </div>
+  </section>
+
+  <!-- Form -->
+  <section class="bg-[#0d1117] py-14 px-6 min-h-[60vh]">
+    <div class="max-w-3xl mx-auto">
+      <form id="submit-form" novalidate>
+
+        <!-- ── Step 1: Upload Photos ──────────────────────────────────── -->
+        <div class="mb-12">
+          <div class="flex items-center gap-3 mb-5">
+            <span class="w-8 h-8 rounded-full bg-purple-600 text-white text-sm font-bold flex items-center justify-center shrink-0">1</span>
+            <h2 class="text-white font-bold text-xl">Upload Photos</h2>
+          </div>
+
+          <!-- Drop zone -->
+          <div
+            id="drop-zone"
+            class="border-2 border-dashed border-gray-700 rounded-2xl p-10 text-center cursor-pointer hover:border-purple-500/60 transition-all duration-200 group"
+            role="button"
+            tabindex="0"
+            aria-label="Upload photos"
+          >
+            <input type="file" id="photo-input" accept="image/*" multiple class="hidden" />
+            <div id="drop-zone-idle">
+              <i class="fa-solid fa-cloud-arrow-up text-5xl text-gray-600 group-hover:text-purple-500/60 mb-4 block transition-colors"></i>
+              <p class="text-gray-300 font-semibold text-lg mb-1">Drop photos here or <span class="text-purple-400">browse</span></p>
+              <p class="text-gray-600 text-sm">JPG, PNG, WEBP &mdash; multiple files supported &mdash; auto-compressed on upload</p>
+            </div>
+          </div>
+
+          <!-- Thumbnail grid + Add More -->
+          <div id="preview-area" class="hidden mt-5">
+            <div id="preview-grid" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2.5"></div>
+            <button
+              type="button"
+              id="add-more-btn"
+              class="mt-3 text-sm text-purple-400 hover:text-purple-300 transition flex items-center gap-1.5"
+            >
+              <i class="fa-solid fa-plus text-xs"></i> Add more photos
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Step 2: Print Details ──────────────────────────────────── -->
+        <div id="section-details" class="mb-12 hidden">
+          <div class="flex items-center gap-3 mb-5">
+            <span class="w-8 h-8 rounded-full bg-purple-600 text-white text-sm font-bold flex items-center justify-center shrink-0">2</span>
+            <h2 class="text-white font-bold text-xl">Print Details</h2>
+            <span class="text-gray-600 text-sm" id="cards-subtitle">Fill in details for each photo</span>
+          </div>
+          <div id="print-cards" class="space-y-5"></div>
+        </div>
+
+        <!-- ── Step 3: About You ──────────────────────────────────────── -->
+        <div class="mb-10">
+          <div class="flex items-center gap-3 mb-5">
+            <span class="w-8 h-8 rounded-full bg-purple-600 text-white text-sm font-bold flex items-center justify-center shrink-0">3</span>
+            <h2 class="text-white font-bold text-xl">About You</h2>
+          </div>
+
+          <div class="bg-[#161b22] border border-white/8 rounded-2xl p-6 space-y-5">
+
+            <!-- Name / Discord -->
+            <div>
+              <label for="submitter" class="block text-sm font-semibold text-gray-300 mb-2">
+                Your Name / Discord Handle <span class="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                id="submitter"
+                name="submitter"
+                placeholder="e.g. @YourDiscordName"
+                class="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition"
+              />
+            </div>
+
+            <!-- Mastodon -->
+            <div>
+              <label for="mastodonHandle" class="block text-sm font-semibold text-gray-300 mb-2">
+                Mastodon Handle <span class="text-gray-500 font-normal">(optional)</span>
+              </label>
+              <input
+                type="text"
+                id="mastodonHandle"
+                name="mastodonHandle"
+                placeholder="@you@mastodon.social"
+                class="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition"
+              />
+            </div>
+
+            <!-- Bluesky -->
+            <div>
+              <label for="blueskyHandle" class="block text-sm font-semibold text-gray-300 mb-2">
+                Bluesky Handle <span class="text-gray-500 font-normal">(optional)</span>
+              </label>
+              <input
+                type="text"
+                id="blueskyHandle"
+                name="blueskyHandle"
+                placeholder="@you.bsky.social"
+                class="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition"
+              />
+            </div>
+
+            <!-- Remember Me -->
+            <div class="flex items-center gap-3 pt-1 border-t border-white/5">
+              <input
+                type="checkbox"
+                id="remember-me"
+                class="w-4 h-4 rounded border-gray-600 bg-[#0d1117] accent-purple-500 cursor-pointer"
+              />
+              <label for="remember-me" class="text-sm text-gray-400 cursor-pointer select-none">
+                Remember me &mdash; save my name and handles for next time
+              </label>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Honeypot (hidden from real users) -->
+        <div aria-hidden="true" style="position:absolute;opacity:0;top:-9999px;left:-9999px;height:0;overflow:hidden;">
+          <label for="website">Website</label>
+          <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <!-- Turnstile -->
+        {turnstileSiteKey && (
+          <div class="mb-6">
+            <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-theme="dark"></div>
+          </div>
+        )}
+
+        <!-- Submit button -->
+        <button
+          type="submit"
+          id="submit-btn"
+          disabled
+          class="w-full bg-purple-600 hover:bg-purple-500 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl text-base transition-all flex items-center justify-center gap-2"
+        >
+          <i class="fa-solid fa-paper-plane" id="submit-icon"></i>
+          <span id="submit-btn-text">Add photos to get started</span>
+        </button>
+
+        <!-- Progress bar -->
+        <div id="submit-progress" class="hidden mt-5 space-y-2">
+          <div class="flex items-center justify-between text-sm text-gray-400 mb-1">
+            <span id="progress-label">Uploading…</span>
+            <span id="progress-fraction" class="font-mono text-xs"></span>
+          </div>
+          <div class="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+            <div
+              id="progress-bar"
+              class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500"
+              style="width: 0%"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Success message -->
+        <div id="form-success" class="hidden mt-6 bg-green-500/10 border border-green-500/30 text-green-300 rounded-2xl p-6 text-center">
+          <i class="fa-solid fa-circle-check text-4xl mb-3 block"></i>
+          <p class="font-bold text-xl mb-1">Submitted!</p>
+          <p class="text-sm text-green-400 mt-1" id="success-detail">Your prints are under review and will appear in the gallery shortly.</p>
+          <a
+            href="/show-and-tell"
+            class="inline-flex items-center gap-2 mt-5 text-sm font-semibold text-green-300 hover:text-white border border-green-500/30 hover:border-green-400/60 rounded-full px-5 py-2 transition"
+          >
+            <i class="fa-solid fa-arrow-left text-xs"></i> Back to Gallery
+          </a>
+        </div>
+
+        <!-- Error message -->
+        <div id="form-error" class="hidden mt-6 bg-red-500/10 border border-red-500/30 text-red-300 rounded-2xl p-5 text-center">
+          <i class="fa-solid fa-circle-exclamation text-2xl mb-2 block"></i>
+          <p class="font-semibold" id="error-message">Something went wrong. Please try again.</p>
+        </div>
+
+      </form>
+    </div>
+  </section>
+
+  <Footer />
+</Layout>
+
+{turnstileSiteKey && (
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+)}
+
+<script>
+  // ── State ───────────────────────────────────────────────────────────────────
+  interface PrintEntry {
+    file: File;
+    dataUrl: string;
+    cardEl: HTMLElement | null;
+  }
+  const prints: PrintEntry[] = [];
+
+  // ── DOM refs ────────────────────────────────────────────────────────────────
+  const dropZone        = document.getElementById('drop-zone')!;
+  const photoInput      = document.getElementById('photo-input') as HTMLInputElement;
+  const previewArea     = document.getElementById('preview-area')!;
+  const previewGrid     = document.getElementById('preview-grid')!;
+  const addMoreBtn      = document.getElementById('add-more-btn')!;
+  const sectionDetails  = document.getElementById('section-details')!;
+  const printCardsEl    = document.getElementById('print-cards')!;
+  const submitBtn       = document.getElementById('submit-btn') as HTMLButtonElement;
+  const submitBtnText   = document.getElementById('submit-btn-text')!;
+  const submitIcon      = document.getElementById('submit-icon')!;
+  const submitProgress  = document.getElementById('submit-progress')!;
+  const progressBar     = document.getElementById('progress-bar')!;
+  const progressLabel   = document.getElementById('progress-label')!;
+  const progressFraction = document.getElementById('progress-fraction')!;
+  const formSuccess     = document.getElementById('form-success')!;
+  const successDetail   = document.getElementById('success-detail')!;
+  const formError       = document.getElementById('form-error')!;
+  const errorMessage    = document.getElementById('error-message')!;
+  const submitterInput  = document.getElementById('submitter') as HTMLInputElement;
+  const mastodonInput   = document.getElementById('mastodonHandle') as HTMLInputElement;
+  const blueskyInput    = document.getElementById('blueskyHandle') as HTMLInputElement;
+  const rememberChk     = document.getElementById('remember-me') as HTMLInputElement;
+
+  // ── Image compression ───────────────────────────────────────────────────────
+  function compressImage(file: File): Promise<File> {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const MAX = 2000;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
+          else { width = Math.round(width * MAX / height); height = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+        URL.revokeObjectURL(url);
+        canvas.toBlob((blob) => {
+          resolve(new File([blob!], file.name.replace(/\.[^.]+$/, '.jpg'), {
+            type: 'image/jpeg', lastModified: Date.now(),
+          }));
+        }, 'image/jpeg', 0.85);
+      };
+      img.src = url;
+    });
+  }
+
+  function fileToDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload  = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ── Update submit button state ──────────────────────────────────────────────
+  function updateSubmitBtn() {
+    const hasPhotos = prints.length > 0;
+    const allNamed  = prints.every(p => {
+      const card = p.cardEl;
+      if (!card) return false;
+      return (card.querySelector('.name-input') as HTMLInputElement)?.value.trim() !== '';
+    });
+
+    if (!hasPhotos) {
+      submitBtn.disabled = true;
+      submitBtnText.textContent = 'Add photos to get started';
+      return;
+    }
+    if (!allNamed) {
+      submitBtn.disabled = true;
+      submitBtnText.textContent = 'Add a Print Name for each photo';
+      return;
+    }
+    submitBtn.disabled = false;
+    const count = prints.length;
+    submitBtnText.textContent = count === 1
+      ? 'Submit 1 Print'
+      : `Submit ${count} Prints`;
+  }
+
+  // ── Add preview thumbnail ────────────────────────────────────────────────────
+  function addPreviewThumb(idx: number, dataUrl: string) {
+    const wrap = document.createElement('div');
+    wrap.className = 'relative aspect-square rounded-lg overflow-hidden bg-gray-800 group cursor-default';
+    wrap.dataset.thumbIdx = String(idx);
+    wrap.innerHTML = `
+      <img src="${dataUrl}" class="w-full h-full object-cover" alt="Photo ${idx + 1}" />
+      <button
+        type="button"
+        data-remove="${idx}"
+        class="remove-thumb absolute top-1 right-1 w-5 h-5 rounded-full bg-black/70 hover:bg-red-600 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+        title="Remove"
+      >
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-center text-[9px] text-gray-400 py-0.5">${idx + 1}</div>
+    `;
+    previewGrid.appendChild(wrap);
+  }
+
+  // ── Add print card ─────────────────────────────────────────────────────────
+  function addPrintCard(idx: number) {
+    const print = prints[idx];
+    const card  = document.createElement('div');
+    card.className = 'print-card bg-[#161b22] border border-white/8 rounded-2xl p-5 transition-all';
+    card.dataset.printIdx = String(idx);
+
+    card.innerHTML = `
+      <div class="flex gap-4 items-start">
+        <!-- Thumbnail -->
+        <div class="shrink-0 flex flex-col items-center gap-1.5">
+          <div class="w-20 h-20 rounded-xl overflow-hidden bg-gray-800 ring-1 ring-white/10">
+            <img src="${print.dataUrl}" class="w-full h-full object-cover" alt="Photo ${idx + 1}" />
+          </div>
+          <span class="text-gray-600 text-xs">Photo ${idx + 1}</span>
+        </div>
+
+        <!-- Fields -->
+        <div class="flex-1 min-w-0 space-y-3">
+
+          <!-- Model Source URL (with autofill) -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Model Source URL</label>
+            <div class="relative">
+              <input
+                type="url"
+                placeholder="Printables, Makerworld, Thingiverse…"
+                class="url-input w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition text-sm pr-28"
+              />
+              <button
+                type="button"
+                class="autofill-btn hidden absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-purple-400 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/25 rounded-md px-2.5 py-1 transition-all"
+              >
+                ✨ Autofill
+              </button>
+              <span class="autofill-spinner hidden absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                <i class="fa-solid fa-circle-notch fa-spin text-xs"></i>
+              </span>
+            </div>
+            <p class="autofill-status text-xs text-purple-400 mt-1 hidden"></p>
+          </div>
+
+          <!-- Print Name -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+              Print Name <span class="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Benchy torture test"
+              class="name-input w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition text-sm"
+            />
+          </div>
+
+          <!-- Description -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Description <span class="text-gray-600 font-normal normal-case">(optional)</span></label>
+            <textarea
+              rows="2"
+              placeholder="Filament, settings, anything interesting…"
+              class="desc-input w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition resize-none text-sm"
+            ></textarea>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    // ── Wire up autofill ──
+    const urlInput      = card.querySelector('.url-input')      as HTMLInputElement;
+    const autofillBtn   = card.querySelector('.autofill-btn')   as HTMLButtonElement;
+    const autofillSpinner = card.querySelector('.autofill-spinner') as HTMLElement;
+    const autofillStatus  = card.querySelector('.autofill-status') as HTMLElement;
+    const nameInput     = card.querySelector('.name-input')     as HTMLInputElement;
+    const descInput     = card.querySelector('.desc-input')     as HTMLTextAreaElement;
+
+    let debounceTimer: ReturnType<typeof setTimeout>;
+
+    function isValidUrl(v: string) {
+      return v.startsWith('http://') || v.startsWith('https://');
+    }
+
+    async function triggerAutofill() {
+      const url = urlInput.value.trim();
+      if (!isValidUrl(url)) return;
+      autofillBtn.classList.add('hidden');
+      autofillSpinner.classList.remove('hidden');
+      autofillStatus.classList.add('hidden');
+      try {
+        const res = await fetch('/api/fetch-model-meta', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+        if (!res.ok) throw new Error('Failed');
+        const { title, description } = await res.json() as { title: string; description: string };
+        let filled = false;
+        if (title && !nameInput.value.trim()) {
+          nameInput.value = title;
+          filled = true;
+          updateSubmitBtn();
+        }
+        if (description && !descInput.value.trim()) {
+          descInput.value = description;
+          filled = true;
+        }
+        if (filled) {
+          autofillStatus.textContent = '✨ Name and description autofilled from URL';
+          autofillStatus.classList.remove('hidden');
+          setTimeout(() => autofillStatus.classList.add('hidden'), 4000);
+        }
+      } catch {
+        // silent fail — URL might just not have OG tags
+      } finally {
+        autofillSpinner.classList.add('hidden');
+        if (isValidUrl(urlInput.value.trim())) {
+          autofillBtn.classList.remove('hidden');
+        }
+      }
+    }
+
+    urlInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      const val = urlInput.value.trim();
+      if (isValidUrl(val)) {
+        autofillBtn.classList.remove('hidden');
+        debounceTimer = setTimeout(triggerAutofill, 900);
+      } else {
+        autofillBtn.classList.add('hidden');
+      }
+    });
+
+    autofillBtn.addEventListener('click', () => triggerAutofill());
+
+    // Update submit button whenever name changes
+    nameInput.addEventListener('input', updateSubmitBtn);
+
+    printCardsEl.appendChild(card);
+    prints[idx].cardEl = card;
+  }
+
+  // ── Handle new files ────────────────────────────────────────────────────────
+  async function handleFiles(newFiles: FileList | File[]) {
+    const fileArr = Array.from(newFiles);
+    for (const rawFile of fileArr) {
+      if (!rawFile.type.startsWith('image/')) continue;
+      const file    = await compressImage(rawFile);
+      const dataUrl = await fileToDataUrl(file);
+      const idx     = prints.length;
+      prints.push({ file, dataUrl, cardEl: null });
+      addPreviewThumb(idx, dataUrl);
+      addPrintCard(idx);
+    }
+    // Show sections
+    if (prints.length > 0) {
+      previewArea.classList.remove('hidden');
+      sectionDetails.classList.remove('hidden');
+    }
+    updateSubmitBtn();
+  }
+
+  // ── Remove print ───────────────────────────────────────────────────────────
+  function removePrint(idx: number) {
+    const entry = prints[idx];
+    if (!entry) return;
+
+    // Remove card from DOM
+    entry.cardEl?.remove();
+
+    // Remove thumb from DOM
+    const thumb = previewGrid.querySelector(`[data-thumb-idx="${idx}"]`);
+    thumb?.remove();
+
+    // Clear from array (mark as null so indices stay stable)
+    prints[idx] = null as unknown as PrintEntry;
+
+    // Check if all removed
+    const remaining = prints.filter(Boolean);
+    if (remaining.length === 0) {
+      previewArea.classList.add('hidden');
+      sectionDetails.classList.add('hidden');
+    }
+    updateSubmitBtn();
+  }
+
+  // ── Drop zone events ────────────────────────────────────────────────────────
+  dropZone.addEventListener('click', () => photoInput.click());
+  dropZone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') photoInput.click(); });
+
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('border-purple-500', 'bg-purple-500/5');
+  });
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('border-purple-500', 'bg-purple-500/5');
+  });
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('border-purple-500', 'bg-purple-500/5');
+    const files = e.dataTransfer?.files;
+    if (files?.length) handleFiles(files);
+  });
+
+  photoInput.addEventListener('change', () => {
+    if (photoInput.files?.length) handleFiles(photoInput.files);
+    photoInput.value = ''; // reset so same file can be re-added
+  });
+
+  addMoreBtn.addEventListener('click', () => photoInput.click());
+
+  // Delegated remove button on preview grid
+  previewGrid.addEventListener('click', (e) => {
+    const btn = (e.target as Element).closest('[data-remove]') as HTMLElement | null;
+    if (btn) {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.remove ?? '-1', 10);
+      if (idx >= 0) removePrint(idx);
+    }
+  });
+
+  // ── Remember Me ────────────────────────────────────────────────────────────
+  const STORAGE_KEY = 'makerdeck_sat_remember';
+
+  function loadRemembered() {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? 'null');
+      if (!saved) return;
+      if (saved.submitter) submitterInput.value = saved.submitter;
+      if (saved.mastodon)  mastodonInput.value  = saved.mastodon;
+      if (saved.bluesky)   blueskyInput.value   = saved.bluesky;
+      rememberChk.checked = true;
+    } catch {}
+  }
+
+  function saveRemembered() {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        submitter: submitterInput.value.trim(),
+        mastodon:  mastodonInput.value.trim(),
+        bluesky:   blueskyInput.value.trim(),
+      }));
+    } catch {}
+  }
+
+  function clearRemembered() {
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  }
+
+  rememberChk.addEventListener('change', () => {
+    if (!rememberChk.checked) clearRemembered();
+  });
+
+  loadRemembered();
+
+  // ── Form submit ────────────────────────────────────────────────────────────
+  const form = document.getElementById('submit-form') as HTMLFormElement;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const activePrints = prints.filter(Boolean);
+    if (!activePrints.length) return;
+
+    const submitter = submitterInput.value.trim();
+    if (!submitter) {
+      submitterInput.focus();
+      submitterInput.classList.add('border-red-500');
+      setTimeout(() => submitterInput.classList.remove('border-red-500'), 2000);
+      return;
+    }
+
+    // Validate all print names
+    for (const p of activePrints) {
+      const nameInp = p.cardEl?.querySelector('.name-input') as HTMLInputElement | null;
+      if (!nameInp?.value.trim()) {
+        nameInp?.focus();
+        nameInp?.classList.add('border-red-500');
+        setTimeout(() => nameInp?.classList.remove('border-red-500'), 2000);
+        p.cardEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+    }
+
+    submitBtn.disabled = true;
+    submitIcon.className = 'fa-solid fa-circle-notch fa-spin';
+    submitBtnText.textContent = 'Submitting…';
+    submitProgress.classList.remove('hidden');
+    formSuccess.classList.add('hidden');
+    formError.classList.add('hidden');
+
+    const honeypot       = (document.getElementById('website') as HTMLInputElement)?.value ?? '';
+    const turnstileToken = (document.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement)?.value ?? '';
+
+    // Build prints payload
+    const printsPayload: Array<{
+      name: string; description: string; modelSource: string;
+      fileName: string; fileType: string; fileData: string;
+    }> = [];
+
+    for (let i = 0; i < activePrints.length; i++) {
+      const p    = activePrints[i];
+      const card = p.cardEl!;
+      const name       = (card.querySelector('.name-input') as HTMLInputElement).value.trim();
+      const description = (card.querySelector('.desc-input') as HTMLTextAreaElement).value.trim();
+      const modelSource = (card.querySelector('.url-input')  as HTMLInputElement).value.trim();
+
+      // Progress
+      progressLabel.textContent = `Preparing ${i + 1} of ${activePrints.length}…`;
+      progressFraction.textContent = `${i}/${activePrints.length}`;
+      progressBar.style.width = `${Math.round((i / activePrints.length) * 50)}%`;
+
+      const fileData = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(p.file);
+      });
+
+      printsPayload.push({
+        name, description, modelSource,
+        fileName: p.file.name,
+        fileType: p.file.type || 'image/jpeg',
+        fileData,
+      });
+    }
+
+    progressLabel.textContent = 'Uploading to gallery…';
+    progressBar.style.width = '60%';
+
+    try {
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          submitter,
+          mastodonHandle: mastodonInput.value.trim(),
+          blueskyHandle:  blueskyInput.value.trim(),
+          website:        honeypot,
+          turnstileToken,
+          prints:         printsPayload,
+        }),
+      });
+
+      progressBar.style.width = '100%';
+
+      if (!res.ok) {
+        const data = await res.json() as { error?: string };
+        throw new Error(data.error ?? 'Submission failed');
+      }
+
+      const data = await res.json() as { submitted: number; failed: number; failedNames?: string[] };
+
+      // Save remember-me
+      if (rememberChk?.checked) saveRemembered();
+      else clearRemembered();
+
+      submitProgress.classList.add('hidden');
+      formSuccess.classList.remove('hidden');
+
+      if (data.failed > 0) {
+        successDetail.textContent = `${data.submitted} print${data.submitted !== 1 ? 's' : ''} submitted! ${data.failed} failed: ${data.failedNames?.join(', ')}.`;
+      } else {
+        successDetail.textContent = data.submitted === 1
+          ? 'Your print is under review and will appear in the gallery shortly.'
+          : `All ${data.submitted} prints are under review and will appear in the gallery shortly.`;
+      }
+
+      submitBtn.disabled = false;
+      submitIcon.className = 'fa-solid fa-paper-plane';
+      submitBtnText.textContent = 'Submit Print';
+
+    } catch (err) {
+      progressBar.style.width = '0%';
+      submitProgress.classList.add('hidden');
+      errorMessage.textContent = (err instanceof Error ? err.message : null) ?? 'Something went wrong. Please try again.';
+      formError.classList.remove('hidden');
+      submitBtn.disabled = false;
+      submitIcon.className = 'fa-solid fa-paper-plane';
+      updateSubmitBtn();
+    }
+  });
+</script>
