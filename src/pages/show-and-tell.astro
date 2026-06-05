@@ -5,8 +5,6 @@ import Footer from '../components/Footer.astro';
 import { getShowAndTellSubmissions } from '../lib/notion';
 import type { ShowAndTellSubmission } from '../lib/notion';
 
-const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
-
 Astro.response.headers.set('Cache-Control', 's-maxage=30, stale-while-revalidate=120');
 
 const submissions = await getShowAndTellSubmissions();
@@ -36,12 +34,12 @@ function formatDate(iso: string): string {
       <p class="text-gray-400 text-lg md:text-xl mb-8 max-w-2xl mx-auto">
         See what the MakerDeck community is printing. Share your own builds, find the models, and get inspired.
       </p>
-      <button
-        id="open-modal-btn"
+      <a
+        href="/share-your-print"
         class="inline-flex items-center gap-2 rounded-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-8 text-lg shadow-xl shadow-purple-900/30 transition transform hover:-translate-y-1"
       >
         <i class="fa-solid fa-upload"></i> Submit Your Print
-      </button>
+      </a>
     </div>
   </section>
 
@@ -75,9 +73,9 @@ function formatDate(iso: string): string {
           <div class="text-6xl mb-6">🖨️</div>
           <h2 class="text-2xl font-bold text-white mb-3">No prints yet!</h2>
           <p class="text-gray-400 mb-8">Be the first to share what you've been building.</p>
-          <button id="open-modal-btn-empty" class="text-purple-400 hover:text-purple-300 font-semibold">
+          <a href="/share-your-print" class="text-purple-400 hover:text-purple-300 font-semibold">
             Submit the first print <i class="fa-solid fa-arrow-right ml-1"></i>
-          </button>
+          </a>
         </div>
       ) : (
         <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -118,11 +116,11 @@ function formatDate(iso: string): string {
                 )}
                 <div class="mt-auto pt-3 border-t border-white/5 flex items-center justify-between gap-2">
                   <div class="flex items-center gap-2 flex-wrap min-w-0">
-                  <span class="text-gray-500 text-xs flex items-center gap-1">
-                    <i class="fa-solid fa-user text-gray-600"></i>
+                    <span class="text-gray-500 text-xs flex items-center gap-1">
+                      <i class="fa-solid fa-user text-gray-600"></i>
                       <button type="button" class="hover:text-purple-400 transition-colors" data-search-btn>{s.submitter}</button>
-                  </span>
-                </div>
+                    </span>
+                  </div>
                   {s.modelSource && (
                     <a
                       href={s.modelSource}
@@ -142,7 +140,6 @@ function formatDate(iso: string): string {
           ))}
         </div>
       )}
-
 
       <!-- Load More -->
       <div id="load-more-container" class="text-center mt-10 hidden">
@@ -165,189 +162,6 @@ function formatDate(iso: string): string {
   </section>
 
   <Footer />
-
-<!-- ── Submit Modal ────────────────────────────────────────────────────── -->
-  <div
-    id="modal-overlay"
-    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
-    aria-modal="true"
-    role="dialog"
-  >
-    <!-- Backdrop -->
-    <div id="modal-backdrop" class="absolute inset-0 bg-black/75 backdrop-blur-sm"></div>
-
-    <!-- Card -->
-    <div class="relative z-10 bg-[#161b22] border border-white/10 rounded-2xl w-full max-w-xl shadow-2xl flex flex-col max-h-[90vh]">
-
-      <!-- Modal header -->
-      <div class="flex items-start justify-between px-6 pt-6 pb-4 border-b border-white/5 shrink-0">
-        <div>
-          <h2 class="text-xl font-bold text-white">Share Your Print</h2>
-          <p class="text-gray-400 text-sm mt-1">All submissions are reviewed before going live.</p>
-        </div>
-        <button
-          id="close-modal-btn"
-          class="ml-4 shrink-0 text-gray-500 hover:text-white transition rounded-lg p-1 hover:bg-white/5"
-          aria-label="Close"
-        >
-          <i class="fa-solid fa-xmark text-xl"></i>
-        </button>
-      </div>
-
-      <!-- Scrollable form area -->
-      <div class="overflow-y-auto modal-scroll">
-        <form id="submit-form" class="p-6 space-y-5">
-
-          <!-- Photo upload -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-300 mb-2">
-              Photo <span class="text-red-400">*</span>
-            </label>
-            <div
-              id="drop-zone"
-              class="border-2 border-dashed border-gray-700 rounded-xl p-6 text-center cursor-pointer hover:border-purple-500/50 transition-colors"
-            >
-              <img id="photo-preview" class="hidden mx-auto max-h-40 rounded-lg mb-3 object-contain" alt="Preview" />
-              <div id="drop-zone-text">
-                <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-600 mb-2 block"></i>
-                <p class="text-gray-400 font-medium text-sm">Drop your photo here or <span class="text-purple-400">browse</span></p>
-                <p class="text-gray-600 text-xs mt-1">JPG, PNG, WEBP — auto-compressed on upload</p>
-              </div>
-              <input type="file" id="photo-input" name="photo" accept="image/*" class="hidden" />
-            </div>
-          </div>
-
-          <!-- Print Name -->
-          <div>
-            <label for="name" class="block text-sm font-semibold text-gray-300 mb-2">
-              Print Name <span class="text-red-400">*</span>
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              placeholder="e.g. Benchy torture test"
-              class="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition"
-            />
-          </div>
-
-          <!-- Description -->
-          <div>
-            <label for="description" class="block text-sm font-semibold text-gray-300 mb-2">Description</label>
-            <textarea
-              id="description"
-              name="description"
-              rows="3"
-              placeholder="Tell us about it — filament, settings, anything interesting…"
-              class="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition resize-none"
-            ></textarea>
-          </div>
-
-          <!-- Model Source -->
-          <div>
-            <label for="modelSource" class="block text-sm font-semibold text-gray-300 mb-2">Model Source URL</label>
-            <input
-              type="url"
-              id="modelSource"
-              name="modelSource"
-              placeholder="https://www.printables.com/model/…"
-              class="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition"
-            />
-          </div>
-
-          <!-- Submitter -->
-          <div>
-            <label for="submitter" class="block text-sm font-semibold text-gray-300 mb-2">
-              Your Name / Discord Handle <span class="text-red-400">*</span>
-            </label>
-            <input
-              type="text"
-              id="submitter"
-              name="submitter"
-              placeholder="e.g. @YourDiscordName"
-              class="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition"
-            />
-          </div>
-
-          <!-- Mastodon Handle -->
-          <div>
-            <label for="mastodonHandle" class="block text-sm font-semibold text-gray-300 mb-2">
-              Mastodon Handle <span class="text-gray-500 font-normal">(optional)</span>
-            </label>
-            <input
-              type="text"
-              id="mastodonHandle"
-              name="mastodonHandle"
-              placeholder="@you@mastodon.social"
-              class="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition"
-            />
-          </div>
-
-          <!-- Bluesky Handle -->
-          <div>
-            <label for="blueskyHandle" class="block text-sm font-semibold text-gray-300 mb-2">
-              Bluesky Handle <span class="text-gray-500 font-normal">(optional)</span>
-            </label>
-            <input
-              type="text"
-              id="blueskyHandle"
-              name="blueskyHandle"
-              placeholder="@you.bsky.social"
-              class="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition"
-            />
-          </div>
-
-
-          <!-- Remember Me -->
-          <div class="flex items-center gap-3 pt-1">
-            <input
-              type="checkbox"
-              id="remember-me"
-              name="remember-me"
-              class="w-4 h-4 rounded border-gray-600 bg-[#0d1117] accent-purple-500 cursor-pointer"
-            />
-            <label for="remember-me" class="text-sm text-gray-400 cursor-pointer select-none">
-              Remember me — save my name and handles for next time
-            </label>
-          </div>
-
-          <!-- Honeypot — hidden from real users, bots tend to fill this in -->
-          <div aria-hidden="true" style="position:absolute;opacity:0;top:-9999px;left:-9999px;height:0;overflow:hidden;">
-            <label for="website">Website</label>
-            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
-          </div>
-
-          <!-- Turnstile widget -->
-          {turnstileSiteKey && (
-            <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-theme="dark"></div>
-          )}
-
-          <!-- Submit button -->
-          <button
-            type="submit"
-            id="submit-btn"
-            class="w-full bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-base transition flex items-center justify-center gap-2"
-          >
-            <i class="fa-solid fa-paper-plane"></i>
-            <span id="submit-btn-text">Submit Print</span>
-          </button>
-
-          <!-- Status messages -->
-          <div id="form-success" class="hidden bg-green-500/10 border border-green-500/30 text-green-300 rounded-xl p-4 text-center">
-            <i class="fa-solid fa-circle-check text-2xl mb-2 block"></i>
-            <p class="font-semibold">Submitted! We'll review it shortly.</p>
-            <p class="text-sm text-green-400 mt-1">Once approved it will appear in the gallery and in Discord.</p>
-          </div>
-          <div id="form-error" class="hidden bg-red-500/10 border border-red-500/30 text-red-300 rounded-xl p-4 text-center">
-            <i class="fa-solid fa-circle-exclamation text-xl mb-2 block"></i>
-            <p class="font-semibold">Something went wrong. Please try again.</p>
-          </div>
-
-        </form>
-      </div>
-    </div>
-  </div>
-
 
   <!-- ── Lightbox ───────────────────────────────────────────────────────────── -->
   <div
@@ -377,28 +191,7 @@ function formatDate(iso: string): string {
     </div>
   </div>
 
-
-<style>
-  /* Custom scrollbar for the modal form */
-  .modal-scroll::-webkit-scrollbar {
-    width: 6px;
-  }
-  .modal-scroll::-webkit-scrollbar-track {
-    background: #0d1117;
-    border-radius: 3px;
-  }
-  .modal-scroll::-webkit-scrollbar-thumb {
-    background: #30363d;
-    border-radius: 3px;
-  }
-  .modal-scroll::-webkit-scrollbar-thumb:hover {
-    background: #6e40c9;
-  }
-</style>
-
 </Layout>
-
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <script>
   const PAGE_SIZE = 13;
@@ -466,85 +259,27 @@ function formatDate(iso: string): string {
 
   searchInput?.addEventListener('input', applySearch);
 
-  // ── Modal open / close ────────────────────────────────────────────────────────
-  const overlay  = document.getElementById('modal-overlay')!;
-  const backdrop = document.getElementById('modal-backdrop')!;
-
-  function openModal() {
-    overlay.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-    document.getElementById('form-success')!.classList.add('hidden');
-    document.getElementById('form-error')!.classList.add('hidden');
-    loadRemembered();
-  }
-
-  function closeModal() {
-    overlay.classList.add('hidden');
-    document.body.style.overflow = '';
-  }
-
-  document.getElementById('open-modal-btn')?.addEventListener('click', openModal);
-  document.getElementById('open-modal-btn-empty')?.addEventListener('click', openModal);
-
-  if (new URLSearchParams(window.location.search).get('submit') === 'true') {
-    openModal();
-    history.replaceState(null, '', window.location.pathname);
-  }
-  document.getElementById('close-modal-btn')?.addEventListener('click', closeModal);
-  backdrop.addEventListener('click', closeModal);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      if (!document.getElementById('lightbox')!.classList.contains('hidden')) {
-        closeLightbox();
-      } else {
-        closeModal();
-      }
+  // Sync search when navigating back/forward
+  window.addEventListener('popstate', () => {
+    const q = new URLSearchParams(location.search).get('q') ?? '';
+    if (searchInput) {
+      searchInput.value = q;
+      applySearch();
     }
   });
 
-  // ── Remember Me ──────────────────────────────────────────────────────────────
-  const STORAGE_KEY = 'makerdeck_sat_remember';
-  const rememberChk  = document.getElementById('remember-me') as HTMLInputElement;
-  const nameInput    = document.getElementById('name') as HTMLInputElement;
-  const submitterInp = document.getElementById('submitter') as HTMLInputElement;
-  const mastodonInp  = document.getElementById('mastodonHandle') as HTMLInputElement | null;
-
-  function loadRemembered() {
-    try {
-      const _s = document.getElementById('submitter') as HTMLInputElement;
-      const _m = document.getElementById('mastodonHandle') as HTMLInputElement | null;
-      const _b = document.getElementById('blueskyHandle') as HTMLInputElement | null;
-      const _r = document.getElementById('remember-me') as HTMLInputElement;
-      const raw = window['localStorage'].getItem('makerdeck_sat_remember');
-      const saved = JSON.parse(raw ?? 'null');
-      if (!saved) return;
-      if (_s && saved.submitter) _s.value = saved.submitter;
-      if (_m && saved.mastodon)  _m.value = saved.mastodon;
-      if (_b && saved.bluesky)   _b.value = saved.bluesky;
-      if (_r) _r.checked = true;
-    } catch {}
+  // Apply any ?q= param on initial load
+  const initialQ = new URLSearchParams(location.search).get('q');
+  if (initialQ && searchInput) {
+    searchInput.value = initialQ;
+    applySearch();
   }
 
-  function saveRemembered() {
-    try {
-      const _s = document.getElementById('submitter') as HTMLInputElement;
-      const _m = document.getElementById('mastodonHandle') as HTMLInputElement | null;
-      const _b = document.getElementById('blueskyHandle') as HTMLInputElement | null;
-      window['localStorage'].setItem('makerdeck_sat_remember', JSON.stringify({
-        submitter: _s?.value.trim() ?? '',
-        mastodon: _m?.value.trim() ?? '',
-        bluesky: _b?.value.trim() ?? '',
-      }));
-    } catch {}
-  }
-
-  function clearRemembered() {
-    try { localStorage.removeItem(STORAGE_KEY); } catch {}
-  }
-
-
-  rememberChk?.addEventListener('change', () => {
-    if (!rememberChk.checked) clearRemembered();
+  // ── Escape key (lightbox only) ────────────────────────────────────────────────
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !document.getElementById('lightbox')!.classList.contains('hidden')) {
+      closeLightbox();
+    }
   });
 
   // ── Lightbox ─────────────────────────────────────────────────────────────────
@@ -552,33 +287,34 @@ function formatDate(iso: string): string {
   const lightboxImg      = document.getElementById('lightbox-img') as HTMLImageElement;
   const lightboxTitle    = document.getElementById('lightbox-title')!;
   const lightboxBackdrop = document.getElementById('lightbox-backdrop')!;
-
-  const lightboxDesc   = document.getElementById('lightbox-description')!;
-  const lightboxSocial = document.getElementById('lightbox-social')!;
+  const lightboxDesc     = document.getElementById('lightbox-description')!;
+  const lightboxSocial   = document.getElementById('lightbox-social')!;
 
   function openLightbox(photoUrl: string, title: string, description = '', mastodon = '', bluesky = '', threads = '') {
     lightboxImg.src = photoUrl;
     lightboxImg.alt = title;
     lightboxTitle.textContent = title;
-    // Description
+
     if (description) {
       lightboxDesc.textContent = description;
       lightboxDesc.classList.remove('hidden');
     } else {
       lightboxDesc.classList.add('hidden');
     }
-    // Social links
+
     lightboxSocial.innerHTML = '';
     const socials: Array<{url: string; label: string; svg: string}> = [];
-    if (bluesky) socials.push({ url: `https://bsky.app/profile/${bluesky.replace(/^@+/,'')}`, label: 'Bluesky', svg: '<svg viewBox="0 0 568 501" class="w-4 h-4" fill="currentColor" aria-hidden="true"><path d="M123.121 33.664C188.241 82.656 258.281 182.672 284 234.448c25.719-51.776 95.759-151.792 160.879-200.784C491.866-1.807 568-30.088 568 57.032c0 17.696-10.155 148.608-16.111 169.872-20.7 73.952-96.144 92.8-163.37 81.376 117.348 19.952 147.285 86.08 82.763 152.208-122.531 125.792-175.995-31.584-189.956-71.936-2.256-6.56-3.321-9.632-3.326-7.024-.005-2.608-1.07.464-3.326 7.024-13.961 40.352-67.425 197.728-189.956 71.936-64.522-66.128-34.585-132.256 82.763-152.208-67.226 11.424-142.67-7.424-163.37-81.376C10.155 205.64 0 74.728 0 57.032 0-30.088 76.134-1.807 123.121 33.664Z"/></svg>' });
+    if (bluesky)  socials.push({ url: `https://bsky.app/profile/${bluesky.replace(/^@+/,'')}`,  label: 'Bluesky',  svg: '<svg viewBox="0 0 568 501" class="w-4 h-4" fill="currentColor" aria-hidden="true"><path d="M123.121 33.664C188.241 82.656 258.281 182.672 284 234.448c25.719-51.776 95.759-151.792 160.879-200.784C491.866-1.807 568-30.088 568 57.032c0 17.696-10.155 148.608-16.111 169.872-20.7 73.952-96.144 92.8-163.37 81.376 117.348 19.952 147.285 86.08 82.763 152.208-122.531 125.792-175.995-31.584-189.956-71.936-2.256-6.56-3.321-9.632-3.326-7.024-.005-2.608-1.07.464-3.326 7.024-13.961 40.352-67.425 197.728-189.956 71.936-64.522-66.128-34.585-132.256 82.763-152.208-67.226 11.424-142.67-7.424-163.37-81.376C10.155 205.64 0 74.728 0 57.032 0-30.088 76.134-1.807 123.121 33.664Z"/></svg>' });
     if (mastodon) socials.push({ url: `https://mastodon.social/@${mastodon.replace(/^@/,'').split('@')[0]}`, label: 'Mastodon', svg: '<svg viewBox="0 0 216.4 232" class="w-4 h-4" fill="currentColor" aria-hidden="true"><path d="M211.8 139.9c-2.9 14.9-26.1 31.2-52.8 34.4-13.9 1.7-27.6 3.2-42.2 2.5-23.9-1.1-42.7-5.7-42.7-5.7 0 2.3.1 4.5.4 6.7 2.9 22.4 22 23.8 40.1 24.4 18.3.6 34.6-4.5 34.6-4.5l.8 16.6s-12.8 6.9-35.6 8.2c-12.6.7-28.2-.3-46.4-4.9-39.4-10.5-46.2-52.8-47.3-95.7-.3-12.7-.1-24.7-.1-34.7 0-43.8 28.7-56.7 28.7-56.7 14.5-6.7 39.3-9.5 65.1-9.7h.6c25.8.2 50.7 3 65.1 9.7 0 0 28.7 12.9 28.7 56.7 0 0 .4 32.3-4 43.1z"/><path d="M177.3 95.4v58.4h-23.1V97c0-12-5-18.1-15.1-18.1-11.1 0-16.7 7.2-16.7 21.5V132h-23V100.4c0-14.3-5.6-21.5-16.7-21.5-10.1 0-15.1 6.1-15.1 18.1v56.8H44.6V95.4c0-12 3-21.5 9.1-28.5 6.3-7 14.5-10.6 24.8-10.6 11.9 0 20.9 4.6 26.8 13.7l5.8 9.7 5.8-9.7c5.9-9.1 14.9-13.7 26.8-13.7 10.2 0 18.4 3.6 24.8 10.6 6.1 7 9.2 16.5 9.2 28.5z"/></svg>' });
-    if (threads) socials.push({ url: `https://www.threads.net/@${threads.replace(/^@+/,'')}`, label: 'Threads', svg: '<svg viewBox="0 0 192 192" class="w-4 h-4" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M141.537 88.988a66 66 0 0 0-2.518-1.143c-1.482-27.307-16.403-42.94-41.457-43.1h-.34c-14.986 0-27.449 6.396-35.12 18.035l13.425 9.19c5.731-8.704 14.706-10.57 21.695-10.57h.23c8.39.052 14.696 2.479 18.759 7.21 2.95 3.409 4.922 8.11 5.897 14.041a117.3 117.3 0 0 0-12.436-.634c-24.964 0-41.01 13.316-40.055 35.034.48 10.864 6.012 20.205 15.606 26.327 8.06 5.208 18.437 7.734 29.2 7.174 14.247-.773 25.44-6.225 33.27-16.202 6.012-7.676 9.755-17.607 11.33-30.116a78.94 78.94 0 0 1 8.49 5.197 53.3 53.3 0 0 1 3.98 4.246V103.07a76.1 76.1 0 0 0-26.074-14.082Zm-18.84 40.657c-6.224 8.74-15.59 13.281-27.878 13.493-7.842.138-13.917-1.806-18.028-5.76-3.735-3.607-5.621-8.462-5.538-14.43.14-9.666 6.657-17.337 20.278-18.793a83.7 83.7 0 0 1 9.42-.531c3.61 0 7.13.246 10.49.716 3.82.533 7.445 1.41 10.847 2.631-.673 9.024-3.022 17.174-9.591 22.674ZM96 0C42.98 0 0 42.98 0 96s42.98 96 96 96 96-42.98 96-96S149.02 0 96 0Z"/></svg>' });
+    if (threads)  socials.push({ url: `https://www.threads.net/@${threads.replace(/^@+/,'')}`,   label: 'Threads',  svg: '<svg viewBox="0 0 192 192" class="w-4 h-4" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M141.537 88.988a66 66 0 0 0-2.518-1.143c-1.482-27.307-16.403-42.94-41.457-43.1h-.34c-14.986 0-27.449 6.396-35.12 18.035l13.425 9.19c5.731-8.704 14.706-10.57 21.695-10.57h.23c8.39.052 14.696 2.479 18.759 7.21 2.95 3.409 4.922 8.11 5.897 14.041a117.3 117.3 0 0 0-12.436-.634c-24.964 0-41.01 13.316-40.055 35.034.48 10.864 6.012 20.205 15.606 26.327 8.06 5.208 18.437 7.734 29.2 7.174 14.247-.773 25.44-6.225 33.27-16.202 6.012-7.676 9.755-17.607 11.33-30.116a78.94 78.94 0 0 1 8.49 5.197 53.3 53.3 0 0 1 3.98 4.246V103.07a76.1 76.1 0 0 0-26.074-14.082Zm-18.84 40.657c-6.224 8.74-15.59 13.281-27.878 13.493-7.842.138-13.917-1.806-18.028-5.76-3.735-3.607-5.621-8.462-5.538-14.43.14-9.666 6.657-17.337 20.278-18.793a83.7 83.7 0 0 1 9.42-.531c3.61 0 7.13.246 10.49.716 3.82.533 7.445 1.41 10.847 2.631-.673 9.024-3.022 17.174-9.591 22.674ZM96 0C42.98 0 0 42.98 0 96s42.98 96 96 96 96-42.98 96-96S149.02 0 96 0Z"/></svg>' });
+
     if (socials.length > 0) {
       lightboxSocial.innerHTML = socials.map(s => `<a href="${s.url}" target="_blank" rel="noopener noreferrer" class="text-[#8b949e] hover:text-white transition-colors" title="${s.label}">${s.svg}</a>`).join('');
       lightboxSocial.classList.remove('hidden');
     } else {
       lightboxSocial.classList.add('hidden');
     }
+
     lightbox.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   }
@@ -590,8 +326,9 @@ function formatDate(iso: string): string {
   }
 
   document.getElementById('lightbox-close')?.addEventListener('click', closeLightbox);
+  lightboxBackdrop.addEventListener('click', closeLightbox);
 
-  // Delegated listener for "more" buttons on cards
+  // Delegated listener for "more" buttons and username filter buttons on cards
   document.addEventListener('click', (e) => {
     const moreBtn = (e.target as Element).closest('[data-more-btn]');
     if (moreBtn) {
@@ -603,168 +340,30 @@ function formatDate(iso: string): string {
     const searchBtn = (e.target as Element).closest('[data-search-btn]');
     if (searchBtn) {
       e.stopPropagation();
-      const c = searchBtn.closest('.gallery-card') as HTMLElement | null;
+      const c  = searchBtn.closest('.gallery-card') as HTMLElement | null;
       const si = document.getElementById('gallery-search') as HTMLInputElement | null;
       if (si && c) {
-        si.value = c.dataset.submitter || '';
+        const submitter = c.dataset.submitter || '';
+        si.value = submitter;
         si.dispatchEvent(new Event('input'));
-        requestAnimationFrame(() => history.replaceState(null, '', location.pathname + location.search));
+        history.pushState({ q: submitter }, '', location.pathname + '?q=' + encodeURIComponent(submitter));
         si.scrollIntoView({ behavior: 'smooth' });
       }
     }
-  }, true); // use capture to fire before card click
-  lightboxBackdrop.addEventListener('click', closeLightbox);
+  }, true);
 
   document.querySelectorAll<HTMLElement>('.lightbox-trigger').forEach(trigger => {
     trigger.addEventListener('click', () => {
       const card = trigger.closest<HTMLElement>('.gallery-card');
       if (!card) return;
-      const photoUrl = card.dataset.photo ?? '';
-      const title       = card.dataset.title ?? '';
-      const description = card.dataset.description ?? '';
-      const mastodon    = card.dataset.mastodon ?? '';
-      const bluesky     = card.dataset.bluesky ?? '';
-      const threads     = card.dataset.threads ?? '';
-      openLightbox(photoUrl, title, description, mastodon, bluesky, threads);
+      openLightbox(
+        card.dataset.photo        ?? '',
+        card.dataset.title        ?? '',
+        card.dataset.description  ?? '',
+        card.dataset.mastodon     ?? '',
+        card.dataset.bluesky      ?? '',
+        card.dataset.threads      ?? '',
+      );
     });
-  });
-
-  // ── Photo drop zone ──────────────────────────────────────────────────────────
-  const dropZone  = document.getElementById('drop-zone')!;
-  const fileInput = document.getElementById('photo-input') as HTMLInputElement;
-  const preview   = document.getElementById('photo-preview') as HTMLImageElement;
-  const dropText  = document.getElementById('drop-zone-text')!;
-
-  dropZone.addEventListener('click', () => fileInput.click());
-
-  dropZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropZone.classList.add('border-purple-500');
-  });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-purple-500'));
-  dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropZone.classList.remove('border-purple-500');
-    const file = e.dataTransfer?.files[0];
-    if (file) showPreview(file);
-  });
-  fileInput.addEventListener('change', () => {
-    const file = fileInput.files?.[0];
-    if (file) showPreview(file);
-  });
-
-  // ── Image compression ────────────────────────────────────────────────────────
-  function compressImage(file: File): Promise<File> {
-    return new Promise((resolve) => {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        const MAX = 2000;
-        let { width, height } = img;
-        if (width > MAX || height > MAX) {
-          if (width > height) {
-            height = Math.round(height * MAX / width);
-            width  = MAX;
-          } else {
-            width  = Math.round(width * MAX / height);
-            height = MAX;
-          }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width  = width;
-        canvas.height = height;
-        canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
-        URL.revokeObjectURL(url);
-        canvas.toBlob((blob) => {
-          const compressed = new File(
-            [blob!],
-            file.name.replace(/\.[^.]+$/, '.jpg'),
-            { type: 'image/jpeg', lastModified: Date.now() }
-          );
-          resolve(compressed);
-        }, 'image/jpeg', 0.85);
-      };
-      img.src = url;
-    });
-  }
-
-  async function showPreview(file: File) {
-    const compressed = await compressImage(file);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      preview.src = e.target?.result as string;
-      preview.classList.remove('hidden');
-      dropText.classList.add('hidden');
-    };
-    reader.readAsDataURL(compressed);
-    const dt = new DataTransfer();
-    dt.items.add(compressed);
-    fileInput.files = dt.files;
-  }
-
-  // ── Form submission ──────────────────────────────────────────────────────────
-  const form     = document.getElementById('submit-form') as HTMLFormElement;
-  const btn      = document.getElementById('submit-btn') as HTMLButtonElement;
-  const btnText  = document.getElementById('submit-btn-text')!;
-  const success  = document.getElementById('form-success')!;
-  const errorBox = document.getElementById('form-error')!;
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    btn.disabled = true;
-    btnText.textContent = 'Uploading…';
-    success.classList.add('hidden');
-    errorBox.classList.add('hidden');
-
-    try {
-      const file = fileInput.files?.[0];
-      if (!file) throw new Error('No photo selected');
-
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload  = () => resolve((reader.result as string).split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-
-      const honeypot      = (document.getElementById('website') as HTMLInputElement)?.value ?? '';
-      const turnstileToken = (document.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement)?.value ?? '';
-
-      const res = await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name:          (document.getElementById('name')        as HTMLInputElement).value.trim(),
-          description:   (document.getElementById('description') as HTMLTextAreaElement).value.trim(),
-          modelSource:   (document.getElementById('modelSource') as HTMLInputElement).value.trim(),
-          submitter:     (document.getElementById('submitter')   as HTMLInputElement).value.trim(),
-          mastodonHandle:(document.getElementById('mastodonHandle') as HTMLInputElement)?.value.trim() ?? '',
-              blueskyHandle:(document.getElementById('blueskyHandle') as HTMLInputElement)?.value.trim() ?? '',
-          fileName:      file.name,
-          fileType:      file.type || 'image/jpeg',
-          fileData:      base64,
-          website:       honeypot,
-          turnstileToken,
-        }),
-      });
-
-      if (!res.ok) throw new Error('Failed');
-
-      // Save details if remember-me is checked
-      if (rememberChk?.checked) saveRemembered();
-      else clearRemembered();
-
-      success.classList.remove('hidden');
-      form.reset();
-      preview.classList.add('hidden');
-      dropText.classList.remove('hidden');
-      setTimeout(() => closeModal(), 2500);
-
-    } catch {
-      errorBox.classList.remove('hidden');
-    } finally {
-      btn.disabled = false;
-      btnText.textContent = 'Submit Print';
-    }
   });
 </script>
